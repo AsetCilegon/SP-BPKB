@@ -3,501 +3,608 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SP-BPKB Cilegon - Sistem Pengelolaan BPKB</title>
-    <!-- Tailwind CSS -->
+    <title>SP-BPKB Cilegon v2.0 - Sistem Pengelolaan BPKB</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Vue JS -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- Chart JS -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
         
-        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; background-color: #f8fafc; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; background-color: #f1f5f9; }
         
         .bg-login {
-            background-image: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.7)), url('https://ppid.cilegon.go.id/4dm1nppid/assets/images/gallery/news/2e2a081aacb1167bfa62977eb9630919.jpg');
-            background-size: cover; background-position: center;
+            background-image: linear-gradient(135deg, rgba(15,23,42,0.85), rgba(30,58,138,0.75)), url('https://berita.cilegon.go.id/assets/img/berita/227571_0.jpg');
+            background-size: cover; background-position: center; background-attachment: fixed;
         }
 
         .glass-panel {
-            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            background: rgba(255,255,255,0.08); backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 32px 64px -12px rgba(0,0,0,0.6);
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        .sidebar-gradient { background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        .fade-enter-active, .fade-leave-active { transition: all 0.4s cubic-bezier(0.4,0,0.2,1); }
+        .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(10px); }
 
         [v-cloak] { display: none; }
 
-        /* Print Styles */
+        .stat-card { transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -12px rgba(0,0,0,0.1); }
+
+        .sidebar-btn { transition: all 0.2s ease; position: relative; overflow: hidden; }
+        .sidebar-btn::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: currentColor; opacity: 0.1; transition: width 0.2s ease; border-radius: inherit; }
+        .sidebar-btn:hover::before { width: 100%; }
+        .sidebar-btn.active::before { width: 100%; opacity: 0.15; }
+
+        .input-modern { transition: all 0.2s ease; border: 1.5px solid #e2e8f0; }
+        .input-modern:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+        .table-row-hover { transition: background-color 0.15s ease; }
+        .table-row-hover:hover { background-color: #f8fafc; }
+
+        .modal-overlay { animation: fadeIn 0.2s ease; }
+        .modal-content { animation: slideUp 0.3s cubic-bezier(0.4,0,0.2,1); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .toast-enter { animation: toastIn 0.4s cubic-bezier(0.4,0,0.2,1); }
+        .toast-leave { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes toastOut { to { opacity: 0; transform: translateX(100px); } }
+
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
         @media print {
             body * { visibility: hidden; }
             #print-section, #print-section * { visibility: visible; }
             #print-section { position: absolute; left: 0; top: 0; width: 100%; }
             .no-print { display: none !important; }
-            @page { size: A4 portrait; margin: 20mm; }
+            @page { size: A4 portrait; margin: 15mm; }
         }
+
+        .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #2563eb; color: white; border-radius: 0.75rem; font-weight: 700; font-size: 0.875rem; transition: all 0.2s; border: none; cursor: pointer; }
+        .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+        .btn-secondary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #f1f5f9; color: #475569; border-radius: 0.75rem; font-weight: 700; font-size: 0.875rem; transition: all 0.2s; border: 1px solid #e2e8f0; cursor: pointer; }
+        .btn-secondary:hover { background: #e2e8f0; transform: translateY(-1px); }
+        .btn-danger { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #fef2f2; color: #dc2626; border-radius: 0.75rem; font-weight: 700; font-size: 0.875rem; transition: all 0.2s; border: 1px solid #fecaca; cursor: pointer; }
+        .btn-danger:hover { background: #fee2e2; }
+        .btn-success { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #10b981; color: white; border-radius: 0.75rem; font-weight: 700; font-size: 0.875rem; transition: all 0.2s; border: none; cursor: pointer; }
+        .btn-success:hover { background: #059669; }
     </style>
 </head>
 <body class="text-slate-800">
 
 <div id="app" v-cloak>
-    <!-- ==================== HALAMAN LOGIN ==================== -->
-    <transition name="fade">
-        <div v-if="!auth.isLoggedIn" class="min-h-screen flex items-center justify-center bg-login p-4">
-            <div class="glass-panel w-full max-w-md p-10 rounded-3xl text-white">
-                <div class="flex flex-col items-center mb-8">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/Lambang_Kota_Cilegon.png" alt="Logo Cilegon" class="h-24 w-auto drop-shadow-2xl mb-5">
-                    <h1 class="text-3xl font-black tracking-tight text-center drop-shadow-md">SP-BPKB</h1>
-                    <p class="text-white/80 text-sm font-medium tracking-wide mt-1">Pemerintah Kota Cilegon</p>
-                </div>
 
-                <div v-if="auth.errorMsg" class="bg-rose-500/20 border border-rose-500/50 text-rose-200 text-sm px-4 py-3 rounded-xl mb-5 flex items-start gap-3">
-                    <i data-lucide="alert-circle" class="w-5 h-5 shrink-0 mt-0.5"></i>
-                    <span>{{ auth.errorMsg }}</span>
-                </div>
-
-                <form @submit.prevent="handleLogin" class="space-y-5">
-                    <div>
-                        <label class="block text-sm font-bold mb-2 ml-1 text-white/90">Username</label>
-                        <div class="relative">
-                            <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50"></i>
-                            <input v-model="loginForm.username" type="text" 
-                                class="w-full bg-slate-900/40 border border-white/20 rounded-xl pl-11 pr-4 py-3.5 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all placeholder:text-white/30 text-white" 
-                                placeholder="Masukkan username">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold mb-2 ml-1 text-white/90">Password</label>
-                        <div class="relative">
-                            <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50"></i>
-                            <input v-model="loginForm.password" :type="auth.showPassword ? 'text' : 'password'" 
-                                class="w-full bg-slate-900/40 border border-white/20 rounded-xl pl-11 pr-12 py-3.5 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all placeholder:text-white/30 text-white" 
-                                placeholder="••••••••">
-                            <button type="button" @click="auth.showPassword = !auth.showPassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors">
-                                <i :data-lucide="auth.showPassword ? 'eye-off' : 'eye'" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <button type="submit" 
-                        class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.4)] transform active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-4">
-                        <i data-lucide="log-in" class="w-5 h-5"></i> Masuk Aplikasi
-                    </button>
-                </form>
+    <!-- TOAST NOTIFICATIONS -->
+    <div class="fixed top-4 right-4 z-[100] space-y-2" style="pointer-events:none;">
+        <div v-for="(t, i) in toasts" :key="t.id" :class="t.leaving ? 'toast-leave' : 'toast-enter'" 
+            class="flex items-center gap-3 px-5 py-3 rounded-2xl shadow-lg border min-w-[300px]" style="pointer-events:auto;"
+            :style="{background: t.type==='success'?'#ecfdf5':t.type==='error'?'#fef2f2':'#eff6ff', borderColor: t.type==='success'?'#a7f3d0':t.type==='error'?'#fecaca':'#bfdbfe'}">
+            <div :class="t.type==='success'?'text-emerald-600':t.type==='error'?'text-rose-600':'text-blue-600'" class="shrink-0">
+                <i :data-lucide="t.type==='success'?'check-circle-2':t.type==='error'?'x-circle':'info'" class="w-5 h-5"></i>
             </div>
+            <span class="text-sm font-semibold" :class="t.type==='success'?'text-emerald-800':t.type==='error'?'text-rose-800':'text-blue-800'">{{ t.msg }}</span>
         </div>
+    </div>
+
+    <!-- ==================== LOGIN ==================== -->
+    <transition name="fade">
+    <div v-if="!auth.isLoggedIn" class="min-h-screen flex items-center justify-center bg-login p-4">
+        <div class="glass-panel w-full max-w-md p-10 rounded-3xl text-white">
+            <div class="flex flex-col items-center mb-8">
+                <div class="relative mb-5">
+                    <div class="absolute inset-0 bg-blue-500/30 rounded-full blur-2xl scale-150"></div>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/Lambang_Kota_Cilegon.png" alt="Logo Cilegon" class="h-28 w-auto drop-shadow-2xl relative z-10">
+                </div>
+                <h1 class="text-3xl font-black tracking-tight text-center drop-shadow-md">SP-BPKB</h1>
+                <p class="text-white/60 text-xs font-bold tracking-[0.2em] mt-2 uppercase">Sistem Pengelolaan BPKB</p>
+                <p class="text-white/80 text-sm font-medium mt-1">Pemerintah Kota Cilegon</p>
+            </div>
+
+            <div v-if="auth.errorMsg" class="bg-rose-500/20 border border-rose-500/40 text-rose-200 text-sm px-4 py-3 rounded-xl mb-5 flex items-start gap-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 shrink-0 mt-0.5"></i>
+                <span>{{ auth.errorMsg }}</span>
+            </div>
+
+            <form @submit.prevent="handleLogin" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold mb-2 ml-1 text-white/80 uppercase tracking-wider">Username</label>
+                    <div class="relative">
+                        <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40"></i>
+                        <input v-model="loginForm.username" type="text" 
+                            class="w-full bg-white/5 border border-white/15 rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 outline-none transition-all placeholder:text-white/25 text-white text-sm" 
+                            placeholder="Masukkan username">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-2 ml-1 text-white/80 uppercase tracking-wider">Password</label>
+                    <div class="relative">
+                        <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40"></i>
+                        <input v-model="loginForm.password" :type="auth.showPassword ? 'text' : 'password'" 
+                            class="w-full bg-white/5 border border-white/15 rounded-2xl pl-12 pr-14 py-4 focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 outline-none transition-all placeholder:text-white/25 text-white text-sm" 
+                            placeholder="••••••••">
+                        <button type="button" @click="auth.showPassword = !auth.showPassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors p-1">
+                            <i :data-lucide="auth.showPassword ? 'eye-off' : 'eye'" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" 
+                    class="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-4 rounded-2xl shadow-[0_8px_30px_rgba(37,99,235,0.4)] transform active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2 text-sm">
+                    <i data-lucide="log-in" class="w-5 h-5"></i> Masuk Aplikasi
+                </button>
+            </form>
+            <p class="text-center text-white/30 text-[10px] mt-6 font-medium">© 2025 BPKAD Kota Cilegon • v2.0</p>
+        </div>
+    </div>
     </transition>
 
-    <!-- ==================== DASHBOARD UTAMA ==================== -->
+    <!-- ==================== MAIN APP ==================== -->
     <div v-if="auth.isLoggedIn" class="flex min-h-screen no-print">
+        
+        <!-- Mobile Overlay -->
+        <div v-if="ui.sidebarOpen" @click="ui.sidebarOpen=false" class="fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
+
         <!-- Sidebar -->
-        <aside class="w-72 bg-white border-r border-slate-200 flex flex-col fixed h-full z-20 shadow-sm">
-            <!-- Double click area for secret admin -->
-            <div @dblclick="promptSecretAdmin" class="p-6 flex items-center gap-3 cursor-pointer select-none group border-b border-slate-100">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/Lambang_Kota_Cilegon.png" alt="Logo" class="h-11 w-auto group-hover:scale-105 transition-transform">
+        <aside :class="ui.sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'" class="w-72 sidebar-gradient border-r border-slate-200/80 flex flex-col fixed h-full z-40 shadow-xl lg:shadow-sm transition-transform duration-300">
+            <div @dblclick="promptSecretAdmin" class="p-5 flex items-center gap-3 cursor-pointer select-none group border-b border-slate-100">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/de/Lambang_Kota_Cilegon.png" alt="Logo" class="h-11 w-auto group-hover:scale-110 transition-transform duration-300">
                 <div>
                     <h2 class="font-black text-slate-800 text-lg leading-tight tracking-tight">SP-BPKB</h2>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Kota Cilegon</p>
+                    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em]">Kota Cilegon</p>
                 </div>
             </div>
 
             <div class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-                <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm">
-                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
-                </button>
-                <button @click="activeTab = 'data'" :class="activeTab === 'data' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm">
-                    <i data-lucide="database" class="w-5 h-5"></i> Daftar BPKB
-                </button>
-                <button @click="activeTab = 'sirkulasi'" :class="activeTab === 'sirkulasi' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm">
-                    <i data-lucide="repeat" class="w-5 h-5"></i> Sirkulasi Dokumen
-                </button>
-                <button @click="activeTab = 'laporan'" :class="activeTab === 'laporan' ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'text-slate-600 hover:bg-slate-50 hover:text-blue-600'" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm">
-                    <i data-lucide="file-text" class="w-5 h-5"></i> Laporan
+                <p class="px-4 py-2 text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">Menu Utama</p>
+                
+                <button v-for="tab in menuTabs" :key="tab.id" @click="activeTab = tab.id; ui.sidebarOpen=false" 
+                    :class="activeTab === tab.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-600 hover:text-blue-600'" 
+                    class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm">
+                    <i :data-lucide="tab.icon" class="w-5 h-5"></i> {{ tab.label }}
+                    <span v-if="tab.id==='sirkulasi' && stats.terlambat > 0" class="ml-auto bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full pulse-dot">{{ stats.terlambat }}</span>
                 </button>
                 
                 <div v-if="ui.isSecretUnlocked" class="pt-4 pb-2">
-                    <p class="px-4 text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-2">
+                    <p class="px-4 text-[9px] font-black text-rose-400 uppercase tracking-[0.2em] flex items-center gap-2">
                         <i data-lucide="shield-alert" class="w-3 h-3"></i> Admin Sistem
                     </p>
                 </div>
-                <button v-if="ui.isSecretUnlocked" @click="activeTab = 'pengaturan'" :class="activeTab === 'pengaturan' ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'text-rose-600 hover:bg-rose-50'" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm">
+                <button v-if="ui.isSecretUnlocked" @click="activeTab = 'pengaturan'; ui.sidebarOpen=false" 
+                    :class="activeTab === 'pengaturan' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'text-rose-500 hover:text-rose-600'" 
+                    class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm">
                     <i data-lucide="settings" class="w-5 h-5"></i> Pengaturan
+                </button>
+                <button v-if="ui.isSecretUnlocked" @click="activeTab = 'database'; ui.sidebarOpen=false" 
+                    :class="activeTab === 'database' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'text-rose-500 hover:text-rose-600'" 
+                    class="sidebar-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm">
+                    <i data-lucide="database" class="w-5 h-5"></i> Database
                 </button>
             </div>
 
-            <div class="p-4 border-t border-slate-100 bg-slate-50/50">
-                <div class="bg-white border border-slate-200 rounded-2xl p-4 mb-3 shadow-sm">
+            <div class="p-4 border-t border-slate-100 bg-gradient-to-t from-slate-50 to-transparent">
+                <div class="bg-white border border-slate-200/80 rounded-2xl p-4 mb-3 shadow-sm">
                     <div class="flex items-center gap-3 mb-3">
-                        <div class="relative group cursor-pointer" @click="$refs.profileUpload.click()">
-                            <img :src="auth.user.photo || `https://ui-avatars.com/api/?name=${auth.user.username}&background=0D8ABC&color=fff`" alt="Profile" class="w-12 h-12 rounded-full border-2 border-white shadow-md object-cover">
+                        <div class="relative group cursor-pointer" @click="$refs.profileUpload && $refs.profileUpload.click()">
+                            <img :src="auth.user.photo || `https://ui-avatars.com/api/?name=${auth.user.username}&background=3b82f6&color=fff&bold=true`" alt="Profile" class="w-11 h-11 rounded-full border-2 border-white shadow-md object-cover">
                             <div class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                                <i data-lucide="camera" class="w-4 h-4 text-white"></i>
+                                <i data-lucide="camera" class="w-3.5 h-3.5 text-white"></i>
                             </div>
                             <input type="file" ref="profileUpload" class="hidden" accept="image/*" @change="handleProfileUpload">
                         </div>
-                        <div class="overflow-hidden">
+                        <div class="overflow-hidden flex-1">
                             <h4 class="font-bold text-slate-800 text-sm truncate capitalize">{{ auth.user.username }}</h4>
-                            <p class="text-[10px] font-bold text-blue-600 bg-blue-50 inline-block px-2 py-0.5 rounded uppercase truncate mt-0.5">{{ auth.user.opd }}</p>
+                            <p class="text-[9px] font-bold text-blue-600 bg-blue-50 inline-block px-2 py-0.5 rounded-full uppercase truncate mt-0.5 max-w-full">{{ auth.user.opd }}</p>
                         </div>
                     </div>
-                    
-                    <div class="flex flex-col text-xs text-slate-500 font-medium bg-slate-50 p-2 rounded-xl">
-                        <div class="flex justify-between items-center">
-                            <span>{{ ui.date }}</span>
-                            <span class="text-slate-800 font-bold bg-white px-2 py-1 rounded shadow-sm border border-slate-100">{{ ui.time }}</span>
-                        </div>
+                    <div class="flex items-center justify-between text-[10px] text-slate-400 font-semibold bg-slate-50 px-3 py-2 rounded-xl">
+                        <span>{{ ui.date }}</span>
+                        <span class="text-slate-700 font-bold bg-white px-2 py-1 rounded-lg shadow-sm border border-slate-100 font-mono">{{ ui.time }}</span>
                     </div>
                 </div>
-
-                <button @click="handleLogout" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 text-slate-600 rounded-xl hover:bg-rose-50 hover:text-rose-600 transition-all font-bold text-sm">
+                <button @click="handleLogout" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-500 rounded-xl hover:bg-rose-50 hover:text-rose-600 transition-all font-bold text-xs">
                     <i data-lucide="log-out" class="w-4 h-4"></i> Keluar Sistem
                 </button>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 ml-72 p-8 max-w-7xl mx-auto w-full pb-20">
-            
-            <!-- ====== TAB DASHBOARD ====== -->
+        <main class="flex-1 lg:ml-72 min-h-screen">
+            <!-- Top Bar Mobile -->
+            <div class="lg:hidden sticky top-0 z-20 bg-white/80 backdrop-blur-lg border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+                <button @click="ui.sidebarOpen = !ui.sidebarOpen" class="p-2 hover:bg-slate-100 rounded-xl"><i data-lucide="menu" class="w-5 h-5"></i></button>
+                <h2 class="font-black text-sm">SP-BPKB</h2>
+            </div>
+
+            <div class="p-4 lg:p-8 max-w-[1400px] mx-auto pb-20">
+
+            <!-- ====== DASHBOARD ====== -->
             <div v-show="activeTab === 'dashboard'" class="space-y-6">
-                <header class="flex justify-between items-end">
-                    <div>
-                        <h1 class="text-3xl font-black text-slate-800">Dashboard</h1>
-                        <p class="text-slate-500 font-medium">Ringkasan status inventaris Buku Pemilik Kendaraan Bermotor.</p>
-                    </div>
+                <header>
+                    <h1 class="text-2xl lg:text-3xl font-black text-slate-800">Dashboard</h1>
+                    <p class="text-slate-500 font-medium text-sm">Ringkasan status inventaris BPKB kendaraan dinas.</p>
                 </header>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4">
-                            <i data-lucide="car" class="w-6 h-6"></i>
-                        </div>
-                        <p class="text-slate-500 text-sm font-bold mb-1">Total Kendaraan</p>
-                        <h3 class="text-3xl font-black text-slate-800">{{ stats.total }}</h3>
-                        <div class="mt-3 text-[11px] font-bold text-slate-400 flex gap-2">
-                            <span class="bg-slate-50 px-2 py-1 rounded">R2: {{ stats.r2 }}</span>
-                            <span class="bg-slate-50 px-2 py-1 rounded">R3: {{ stats.r3 }}</span>
-                            <span class="bg-slate-50 px-2 py-1 rounded">R4: {{ stats.r4 }}</span>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="stat-card bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-3"><i data-lucide="car" class="w-5 h-5"></i></div>
+                        <p class="text-slate-400 text-xs font-bold mb-0.5">Total Kendaraan</p>
+                        <h3 class="text-2xl lg:text-3xl font-black text-slate-800">{{ stats.total }}</h3>
+                        <div class="mt-2 text-[10px] font-bold text-slate-400 flex flex-wrap gap-1">
+                            <span class="bg-slate-50 px-1.5 py-0.5 rounded">R2: {{ stats.r2 }}</span>
+                            <span class="bg-slate-50 px-1.5 py-0.5 rounded">R3: {{ stats.r3 }}</span>
+                            <span class="bg-slate-50 px-1.5 py-0.5 rounded">R4: {{ stats.r4 }}</span>
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4">
-                            <i data-lucide="check-circle" class="w-6 h-6"></i>
-                        </div>
-                        <p class="text-slate-500 text-sm font-bold mb-1">BPKB Tersedia</p>
-                        <h3 class="text-3xl font-black text-emerald-600">{{ stats.tersedia }}</h3>
+                    <div class="stat-card bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-3"><i data-lucide="check-circle" class="w-5 h-5"></i></div>
+                        <p class="text-slate-400 text-xs font-bold mb-0.5">BPKB Tersedia</p>
+                        <h3 class="text-2xl lg:text-3xl font-black text-emerald-600">{{ stats.tersedia }}</h3>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
-                            <i data-lucide="book-open" class="w-6 h-6"></i>
-                        </div>
-                        <p class="text-slate-500 text-sm font-bold mb-1">BPKB Dipinjam</p>
-                        <h3 class="text-3xl font-black text-amber-600">{{ stats.dipinjam }}</h3>
+                    <div class="stat-card bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <div class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mb-3"><i data-lucide="book-open" class="w-5 h-5"></i></div>
+                        <p class="text-slate-400 text-xs font-bold mb-0.5">BPKB Dipinjam</p>
+                        <h3 class="text-2xl lg:text-3xl font-black text-amber-600">{{ stats.dipinjam }}</h3>
                     </div>
-                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-4">
-                            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
-                        </div>
-                        <p class="text-slate-500 text-sm font-bold mb-1">Terlambat Kembali</p>
-                        <h3 class="text-3xl font-black text-rose-600">{{ stats.terlambat }}</h3>
+                    <div class="stat-card bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center mb-3"><i data-lucide="alert-triangle" class="w-5 h-5"></i></div>
+                        <p class="text-slate-400 text-xs font-bold mb-0.5">Terlambat Kembali</p>
+                        <h3 class="text-2xl lg:text-3xl font-black text-rose-600">{{ stats.terlambat }}</h3>
                     </div>
                 </div>
 
-                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                    <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <i data-lucide="bar-chart-3" class="w-5 h-5 text-blue-500"></i> Grafik Sirkulasi BPKB
-                    </h3>
-                    <div class="h-[300px] w-full"><canvas id="bpkbChart"></canvas></div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-500"></i> Grafik Sirkulasi BPKB</h3>
+                        <div class="h-[250px] w-full"><canvas id="bpkbChart"></canvas></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="w-4 h-4 text-purple-500"></i> Distribusi Jenis</h3>
+                        <div class="h-[250px] w-full"><canvas id="jenisChart"></canvas></div>
+                    </div>
                 </div>
             </div>
 
-            <!-- ====== TAB DATA BPKB ====== -->
+            <!-- ====== DAFTAR BPKB ====== -->
             <div v-show="activeTab === 'data'" class="space-y-6">
-                <header class="flex justify-between items-center">
+                <header class="flex flex-col lg:flex-row justify-between lg:items-center gap-4">
                     <div>
-                        <h1 class="text-3xl font-black text-slate-800">Daftar BPKB</h1>
-                        <p class="text-slate-500 font-medium">Manajemen data inventaris BPKB.</p>
+                        <h1 class="text-2xl lg:text-3xl font-black text-slate-800">Daftar BPKB</h1>
+                        <p class="text-slate-500 font-medium text-sm">Manajemen data inventaris BPKB kendaraan dinas.</p>
                     </div>
-                    <div class="flex gap-2">
-                        <button v-if="hasRight('Mencetak Data')" @click="mockAction('Template diunduh')" class="btn-secondary">
-                            <i data-lucide="download" class="w-4 h-4"></i> Template
-                        </button>
-                        <button v-if="hasRight('Import Data')" @click="mockAction('Import diproses')" class="btn-secondary">
-                            <i data-lucide="upload" class="w-4 h-4"></i> Import Excel
-                        </button>
-                        <button v-if="hasRight('Mengedit Data')" @click="openModalBpkb()" class="btn-primary">
-                            <i data-lucide="plus" class="w-4 h-4"></i> Tambah Data
-                        </button>
+                    <div class="flex flex-wrap gap-2">
+                        <button v-if="hasRight('Mencetak Data')" @click="downloadTemplateBpkb" class="btn-secondary text-xs"><i data-lucide="download" class="w-4 h-4"></i> Template</button>
+                        <button v-if="hasRight('Import Data')" @click="$refs.importBpkbFile.click()" class="btn-secondary text-xs"><i data-lucide="upload" class="w-4 h-4"></i> Import Excel</button>
+                        <input type="file" ref="importBpkbFile" class="hidden" accept=".xlsx,.xls" @change="importBpkbExcel">
+                        <button v-if="hasRight('Mengedit Data')" @click="openModalBpkb()" class="btn-primary text-xs"><i data-lucide="plus" class="w-4 h-4"></i> Tambah Data</button>
                     </div>
                 </header>
 
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center">
-                    <div class="relative flex-1 min-w-[250px]">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-wrap gap-3 items-center">
+                    <div class="relative flex-1 min-w-[200px]">
                         <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                        <input v-model="filter.search" type="text" placeholder="Cari Nopol, Nama Barang..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
+                        <input v-model="filter.search" type="text" placeholder="Cari Nopol, Nama Barang, OPD..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm input-modern focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
-                    <select v-model="filter.jenis" class="bg-slate-50 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 font-bold">
+                    <select v-model="filter.jenis" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold input-modern focus:ring-2 focus:ring-blue-500 outline-none">
                         <option value="all">Semua Jenis</option>
                         <option value="Roda 2">Roda 2</option>
                         <option value="Roda 3">Roda 3</option>
                         <option value="Roda 4">Roda 4</option>
                     </select>
-                    <button v-if="hasRight('Menghapus Data') && selectedBpkb.length > 0" @click="bulkDeleteBpkb" class="px-4 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl font-bold text-sm transition-colors flex items-center gap-2">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus Terpilih ({{ selectedBpkb.length }})
+                    <select v-model="filter.status" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold input-modern focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="all">Semua Status</option>
+                        <option>BPKB Tersedia</option>
+                        <option>BPKB Dipinjam</option>
+                        <option>BPKB Terlambat Kembali</option>
+                    </select>
+                    <button v-if="hasRight('Menghapus Data') && selectedBpkb.length > 0" @click="bulkDeleteBpkb" class="btn-danger text-xs">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus ({{ selectedBpkb.length }})
                     </button>
                 </div>
 
-                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-slate-50/80 text-slate-500 text-[11px] uppercase tracking-wider font-bold border-b border-slate-200">
-                                    <th v-if="hasRight('Menghapus Data')" class="px-4 py-4 w-10 text-center">
-                                        <input type="checkbox" @change="toggleSelectAll" :checked="selectedBpkb.length === filteredInventory.length && filteredInventory.length > 0" class="rounded text-blue-600 focus:ring-blue-500">
-                                    </th>
-                                    <th class="px-4 py-4">No</th>
-                                    <th class="px-4 py-4">OPD/UPB</th>
-                                    <th class="px-4 py-4">Reg / Jenis</th>
-                                    <th class="px-4 py-4">Barang / Merk</th>
-                                    <th class="px-4 py-4">Nopol</th>
-                                    <th class="px-4 py-4">File BPKB</th>
-                                    <th class="px-4 py-4">Gambar</th>
-                                    <th class="px-4 py-4">Status</th>
-                                    <th class="px-4 py-4 text-center">Aksi</th>
+                                <tr class="bg-slate-50/80 text-slate-500 text-[10px] uppercase tracking-wider font-bold border-b border-slate-200">
+                                    <th v-if="hasRight('Menghapus Data')" class="px-3 py-3.5 w-10 text-center"><input type="checkbox" @change="toggleSelectAll" :checked="selectedBpkb.length === paginatedInventory.length && paginatedInventory.length > 0" class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"></th>
+                                    <th class="px-3 py-3.5">No</th>
+                                    <th class="px-3 py-3.5">OPD/UPB</th>
+                                    <th class="px-3 py-3.5">Register</th>
+                                    <th class="px-3 py-3.5">Barang / Merk</th>
+                                    <th class="px-3 py-3.5">Nopol</th>
+                                    <th class="px-3 py-3.5">Thn</th>
+                                    <th class="px-3 py-3.5">File</th>
+                                    <th class="px-3 py-3.5">Status</th>
+                                    <th class="px-3 py-3.5 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-sm">
-                                <tr v-for="(item, idx) in filteredInventory" :key="item.id" class="hover:bg-slate-50/50 transition-colors">
-                                    <td v-if="hasRight('Menghapus Data')" class="px-4 py-3 text-center">
-                                        <input type="checkbox" :value="item.id" v-model="selectedBpkb" class="rounded text-blue-600 focus:ring-blue-500 border-slate-300">
+                                <tr v-for="(item, idx) in paginatedInventory" :key="item.id" class="table-row-hover">
+                                    <td v-if="hasRight('Menghapus Data')" class="px-3 py-3 text-center"><input type="checkbox" :value="item.id" v-model="selectedBpkb" class="rounded text-blue-600 focus:ring-blue-500 border-slate-300 w-3.5 h-3.5"></td>
+                                    <td class="px-3 py-3 font-medium text-slate-400 text-xs">{{ (pagination.current - 1) * pagination.perPage + idx + 1 }}</td>
+                                    <td class="px-3 py-3">
+                                        <div class="font-bold text-slate-800 text-xs leading-tight">{{ item.namaOpd }}</div>
+                                        <div class="text-[9px] text-slate-400 font-mono">{{ item.kodeOpd }}</div>
                                     </td>
-                                    <td class="px-4 py-3 font-medium text-slate-400">{{ idx + 1 }}</td>
-                                    <td class="px-4 py-3">
-                                        <div class="font-bold text-slate-800 text-xs">{{ item.namaOpd }}</div>
-                                        <div class="text-[10px] text-slate-400">{{ item.kodeOpd }}</div>
+                                    <td class="px-3 py-3">
+                                        <div class="text-xs font-mono">{{ item.noRegister }}</div>
+                                        <span class="px-1.5 py-0.5 rounded bg-slate-100 text-[9px] font-bold">{{ item.jenis }}</span>
                                     </td>
-                                    <td class="px-4 py-3">
-                                        <div class="text-xs font-mono mb-1">{{ item.noRegister }}</div>
-                                        <span class="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold">{{ item.jenis }}</span>
-                                    </td>
-                                    <td class="px-4 py-3">
+                                    <td class="px-3 py-3">
                                         <div class="font-bold text-xs">{{ item.namaBarang }}</div>
                                         <div class="text-[10px] text-slate-500">{{ item.merkType }}</div>
                                     </td>
-                                    <td class="px-4 py-3">
-                                        <!-- CLick Nopol to see Details -->
-                                        <button @click="openDetailKendaraan(item)" class="font-mono font-black text-blue-600 hover:text-blue-800 hover:underline transition-all">
-                                            {{ item.noPolisi }}
-                                        </button>
+                                    <td class="px-3 py-3">
+                                        <button @click="openDetailKendaraan(item)" class="font-mono font-black text-blue-600 hover:text-blue-800 hover:underline transition-all text-xs">{{ item.noPolisi }}</button>
                                     </td>
-                                    <td class="px-4 py-3">
-                                        <span v-if="item.scanBpkb" class="text-emerald-600 flex items-center gap-1 text-[10px] font-bold bg-emerald-50 px-2 py-1 rounded w-max"><i data-lucide="check" class="w-3 h-3"></i> Ada</span>
-                                        <span v-else class="text-slate-400 text-[10px] italic">Kosong</span>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <span v-if="item.scanGambar" class="text-blue-600 flex items-center gap-1 text-[10px] font-bold bg-blue-50 px-2 py-1 rounded w-max"><i data-lucide="image" class="w-3 h-3"></i> Ada</span>
-                                        <span v-else class="text-slate-400 text-[10px] italic">Kosong</span>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="flex items-center gap-2 w-max">
-                                            <span :class="{
-                                                'bg-emerald-100 text-emerald-700': item.status === 'BPKB Tersedia',
-                                                'bg-amber-100 text-amber-700': item.status === 'BPKB Dipinjam',
-                                                'bg-rose-100 text-rose-700': item.status === 'BPKB Terlambat Kembali'
-                                            }" class="px-2.5 py-1 rounded border border-transparent text-[10px] font-black uppercase tracking-wider">
-                                                {{ item.status }}
-                                            </span>
-                                            <!-- Admin Toggle Status -->
-                                            <button v-if="auth.user.role === 'admin' || hasRight('Mengedit Data')" @click="toggleStatus(item)" class="p-1 text-slate-400 hover:bg-slate-200 rounded-full" title="Ubah Status">
-                                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                                            </button>
+                                    <td class="px-3 py-3 text-xs text-slate-500">{{ item.tahunPerolehan || '-' }}</td>
+                                    <td class="px-3 py-3">
+                                        <div class="flex gap-1">
+                                            <span v-if="item.scanBpkb" class="text-emerald-600 text-[9px] font-bold bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-0.5"><i data-lucide="file-check" class="w-3 h-3"></i>B</span>
+                                            <span v-if="item.scanGambar" class="text-blue-600 text-[9px] font-bold bg-blue-50 px-1.5 py-0.5 rounded flex items-center gap-0.5"><i data-lucide="image" class="w-3 h-3"></i>G</span>
+                                            <span v-if="!item.scanBpkb && !item.scanGambar" class="text-slate-300 text-[9px] italic">-</span>
                                         </div>
                                     </td>
-                                    <td class="px-4 py-3">
-                                        <div class="flex justify-center gap-1">
-                                            <button v-if="hasRight('Mengedit Data')" @click="openModalBpkb(item)" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
-                                                <i data-lucide="edit" class="w-4 h-4"></i>
-                                            </button>
-                                            <button v-if="hasRight('Menghapus Data')" @click="deleteBpkb(item.id)" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg">
-                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                            </button>
+                                    <td class="px-3 py-3">
+                                        <div class="flex items-center gap-1">
+                                            <span :class="{'bg-emerald-100 text-emerald-700':item.status==='BPKB Tersedia','bg-amber-100 text-amber-700':item.status==='BPKB Dipinjam','bg-rose-100 text-rose-700':item.status==='BPKB Terlambat Kembali'}" class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider whitespace-nowrap">{{ item.status }}</span>
+                                            <button v-if="hasRight('Mengedit Data')" @click="toggleStatus(item)" class="p-0.5 text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded" title="Ubah Status"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button>
+                                        </div>
+                                    </td>
+                                    <td class="px-3 py-3">
+                                        <div class="flex justify-center gap-0.5">
+                                            <button v-if="hasRight('Mengedit Data')" @click="openModalBpkb(item)" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit"><i data-lucide="edit" class="w-3.5 h-3.5"></i></button>
+                                            <button v-if="hasRight('Menghapus Data')" @click="deleteBpkb(item.id)" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg" title="Hapus"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                                         </div>
                                     </td>
                                 </tr>
-                                <tr v-if="filteredInventory.length === 0">
-                                    <td colspan="10" class="py-12 text-center text-slate-400 font-medium">Tidak ada data ditemukan.</td>
+                                <tr v-if="paginatedInventory.length === 0">
+                                    <td colspan="10" class="py-16 text-center text-slate-300"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3"></i><p class="font-semibold text-sm">Tidak ada data ditemukan.</p></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
+                    <!-- Pagination -->
+                    <div v-if="totalPages > 1" class="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+                        <span class="text-xs text-slate-500 font-medium">Menampilkan {{ (pagination.current-1)*pagination.perPage+1 }}-{{ Math.min(pagination.current*pagination.perPage, filteredInventory.length) }} dari {{ filteredInventory.length }}</span>
+                        <div class="flex gap-1">
+                            <button @click="pagination.current = Math.max(1, pagination.current-1)" :disabled="pagination.current===1" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 hover:bg-white disabled:opacity-30">Prev</button>
+                            <button v-for="p in visiblePages" :key="p" @click="pagination.current = p" :class="pagination.current===p ? 'bg-blue-600 text-white border-blue-600' : 'hover:bg-white border-slate-200'" class="px-3 py-1.5 text-xs font-bold rounded-lg border">{{ p }}</button>
+                            <button @click="pagination.current = Math.min(totalPages, pagination.current+1)" :disabled="pagination.current===totalPages" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 hover:bg-white disabled:opacity-30">Next</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- ====== TAB SIRKULASI ====== -->
+            <!-- ====== SIRKULASI ====== -->
             <div v-show="activeTab === 'sirkulasi'" class="space-y-6">
                 <header>
-                    <h1 class="text-3xl font-black text-slate-800">Sirkulasi Dokumen</h1>
-                    <p class="text-slate-500 font-medium">Form peminjaman dan pencetakan Kartu Kendali.</p>
+                    <h1 class="text-2xl lg:text-3xl font-black text-slate-800">Sirkulasi Dokumen</h1>
+                    <p class="text-slate-500 font-medium text-sm">Form peminjaman dan pengelolaan sirkulasi BPKB.</p>
                 </header>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-1 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i data-lucide="clipboard-edit" class="w-5 h-5 text-blue-600"></i> Form Peminjaman</h3>
-                        <form @submit.prevent="submitLoan" class="space-y-4">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <h3 class="font-bold text-sm mb-4 flex items-center gap-2"><i data-lucide="clipboard-edit" class="w-4 h-4 text-blue-600"></i> Form Peminjaman</h3>
+                        <form @submit.prevent="submitLoan" class="space-y-3">
                             <div>
-                                <label class="block text-xs font-bold mb-1.5 text-slate-600">Pilih BPKB (Hanya yang Tersedia)</label>
-                                <select v-model="loanForm.selectedId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                <label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase tracking-wider">Pilih BPKB (Tersedia)</label>
+                                <select v-model="loanForm.selectedId" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm input-modern">
                                     <option value="">-- Pilih Kendaraan --</option>
-                                    <option v-for="b in bpkbTersedia" :key="b.id" :value="b.id">
-                                        {{ b.noPolisi }} - {{ b.merkType }}
-                                    </option>
+                                    <option v-for="b in bpkbTersedia" :key="b.id" :value="b.id">{{ b.noPolisi }} - {{ b.merkType }}</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold mb-1.5 text-slate-600">Nama Peminjam</label>
-                                <input v-model="loanForm.namaPeminjam" type="text" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                <label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase tracking-wider">Nama Peminjam</label>
+                                <input v-model="loanForm.namaPeminjam" type="text" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm input-modern">
                             </div>
-                            <div class="grid grid-cols-2 gap-3">
+                            <div class="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label class="block text-xs font-bold mb-1.5 text-slate-600">Tgl Pinjam</label>
-                                    <input v-model="loanForm.tglPinjam" type="date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                    <label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase tracking-wider">Tgl Pinjam</label>
+                                    <input v-model="loanForm.tglPinjam" type="date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm input-modern">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold mb-1.5 text-slate-600">Est. Kembali</label>
-                                    <input v-model="loanForm.tglKembali" type="date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                    <label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase tracking-wider">Est. Kembali</label>
+                                    <input v-model="loanForm.tglKembali" type="date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm input-modern">
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold mb-1.5 text-slate-600">Nomor Surat Dinas</label>
-                                <input v-model="loanForm.noSurat" type="text" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                <label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase tracking-wider">Nomor Surat Dinas</label>
+                                <input v-model="loanForm.noSurat" type="text" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm input-modern">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold mb-1.5 text-slate-600">Surat Permohonan (File)</label>
-                                <input type="file" class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700">
+                                <label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase tracking-wider">Surat Permohonan (File)</label>
+                                <input type="file" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-blue-50 file:text-blue-700">
                             </div>
-                            <button type="submit" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-200 mt-2">
-                                Ajukan Peminjaman
-                            </button>
+                            <button type="submit" class="w-full py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-md shadow-blue-200 text-sm">Ajukan Peminjaman</button>
                         </form>
                     </div>
 
-                    <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div class="p-6 border-b border-slate-100 font-bold text-lg">Riwayat Peminjaman</div>
-                        <div class="divide-y divide-slate-100">
-                            <div v-for="loan in dataLoans" :key="loan.id" class="p-6 hover:bg-slate-50">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <h4 class="font-black text-slate-800 text-lg">{{ loan.namaPeminjam }}</h4>
-                                        <p class="text-xs font-bold text-slate-500 mt-1">Surat: <span class="text-slate-800">{{ loan.noSurat }}</span></p>
-                                        <div class="mt-3 flex gap-4 text-xs font-medium">
+                    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                            <span class="font-bold text-sm">Riwayat Peminjaman</span>
+                            <div class="flex gap-2">
+                                <select v-model="loanFilter.status" class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold">
+                                    <option value="all">Semua Status</option>
+                                    <option>Dipinjam</option>
+                                    <option>Dikembalikan</option>
+                                </select>
+                                <select v-model="loanFilter.tahun" class="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold">
+                                    <option value="all">Semua Tahun</option>
+                                    <option v-for="y in loanYears" :key="y">{{ y }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
+                            <div v-for="loan in filteredLoans" :key="loan.id" class="p-5 hover:bg-slate-50/50 transition-colors">
+                                <div class="flex justify-between items-start gap-4">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <h4 class="font-black text-slate-800">{{ loan.namaPeminjam }}</h4>
+                                            <span :class="loan.statusPinjam==='Dikembalikan'?'bg-emerald-100 text-emerald-700':'bg-amber-100 text-amber-700'" class="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">{{ loan.statusPinjam || 'Dipinjam' }}</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-500 font-medium">Surat: <span class="text-slate-700 font-bold">{{ loan.noSurat }}</span></p>
+                                        <div class="mt-2 flex flex-wrap gap-2 text-[10px] font-semibold">
                                             <span class="bg-slate-100 px-2 py-1 rounded border border-slate-200">Pinjam: {{ loan.tglPinjam }}</span>
                                             <span class="bg-amber-50 text-amber-700 px-2 py-1 rounded border border-amber-200">Kembali: {{ loan.tglKembali }}</span>
                                         </div>
+                                        <div class="mt-2 flex items-center gap-2 bg-white border border-slate-200 px-2 py-1.5 rounded-lg w-max shadow-sm">
+                                            <i data-lucide="car" class="w-3.5 h-3.5 text-blue-500"></i>
+                                            <span class="text-xs font-bold">{{ loan.unit.noPolisi }}</span>
+                                            <span class="text-[10px] text-slate-500">{{ loan.unit.merkType }}</span>
+                                        </div>
                                     </div>
-                                    <button @click="openPrintModal(loan)" class="btn-secondary text-xs">
-                                        <i data-lucide="printer" class="w-4 h-4"></i> Cetak Kartu Kendali
-                                    </button>
-                                </div>
-                                <div class="mt-4 pt-4 border-t border-slate-100">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Unit Kendaraan</p>
-                                    <div class="flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-lg w-max shadow-sm">
-                                        <i data-lucide="car" class="w-4 h-4 text-blue-500"></i>
-                                        <span class="text-sm font-bold">{{ loan.unit.noPolisi }}</span>
-                                        <span class="text-xs text-slate-500">- {{ loan.unit.merkType }}</span>
+                                    <div class="flex flex-col gap-1.5 shrink-0">
+                                        <button @click="openPrintModal(loan)" class="btn-secondary text-[10px] py-1.5 px-3"><i data-lucide="printer" class="w-3 h-3"></i> Cetak KK</button>
+                                        <button v-if="loan.statusPinjam !== 'Dikembalikan'" @click="returnLoan(loan)" class="btn-success text-[10px] py-1.5 px-3"><i data-lucide="undo-2" class="w-3 h-3"></i> Kembalikan</button>
                                     </div>
                                 </div>
                             </div>
-                            <div v-if="dataLoans.length === 0" class="p-10 text-center text-slate-400 text-sm">Belum ada data sirkulasi.</div>
+                            <div v-if="filteredLoans.length === 0" class="p-12 text-center text-slate-300 text-sm"><i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2"></i><p>Belum ada data sirkulasi.</p></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ====== TAB LAPORAN ====== -->
+            <!-- ====== LAPORAN ====== -->
             <div v-show="activeTab === 'laporan'" class="space-y-6">
                 <header>
-                    <h1 class="text-3xl font-black text-slate-800">Laporan Inventaris</h1>
-                    <p class="text-slate-500 font-medium">Review dan cetak rekapitulasi data BPKB.</p>
+                    <h1 class="text-2xl lg:text-3xl font-black text-slate-800">Laporan Peminjaman BPKB</h1>
+                    <p class="text-slate-500 font-medium text-sm">Review, cetak dan unduh rekapitulasi data peminjaman.</p>
                 </header>
 
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-4">
-                    <select class="bg-slate-50 rounded-xl px-4 py-2 text-sm border-none focus:ring-2 focus:ring-blue-500 font-bold">
-                        <option>Tahun 2024</option><option>Tahun 2025</option><option>Tahun 2026</option>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-wrap gap-3 items-center">
+                    <select v-model="reportFilter.tahun" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold input-modern">
+                        <option value="all">Semua Tahun</option>
+                        <option v-for="y in reportYears" :key="y">{{ y }}</option>
                     </select>
-                    <select class="bg-slate-50 rounded-xl px-4 py-2 text-sm border-none focus:ring-2 focus:ring-blue-500 font-bold">
-                        <option>Semua Bulan</option><option>Januari</option><option>Februari</option>
+                    <select v-model="reportFilter.bulanDari" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold input-modern">
+                        <option value="0">Dari Bulan</option>
+                        <option v-for="(m,i) in bulanList" :key="i" :value="i+1">{{ m }}</option>
                     </select>
-                    <select class="bg-slate-50 rounded-xl px-4 py-2 text-sm border-none focus:ring-2 focus:ring-blue-500 font-bold">
-                        <option>Semua Status</option>
+                    <select v-model="reportFilter.bulanSampai" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold input-modern">
+                        <option value="12">Sampai Bulan</option>
+                        <option v-for="(m,i) in bulanList" :key="i" :value="i+1">{{ m }}</option>
+                    </select>
+                    <select v-if="isAdmin" v-model="reportFilter.opd" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold input-modern">
+                        <option value="all">Semua OPD/UPB</option>
+                        <option v-for="o in opdList" :key="o">{{ o }}</option>
+                    </select>
+                    <select v-model="reportFilter.status" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-bold input-modern">
+                        <option value="all">Semua Status</option>
                         <option>BPKB Tersedia</option><option>BPKB Dipinjam</option><option>BPKB Terlambat Kembali</option>
                     </select>
                     <div class="flex-1"></div>
-                    <button class="btn-secondary"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export Excel</button>
-                    <button class="btn-primary"><i data-lucide="printer" class="w-4 h-4"></i> Cetak PDF</button>
+                    <button @click="generateReport" class="btn-primary text-xs"><i data-lucide="eye" class="w-4 h-4"></i> Tampilkan</button>
+                    <button @click="exportReportExcel" class="btn-secondary text-xs"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel</button>
+                    <button @click="exportReportPDF" class="btn-secondary text-xs"><i data-lucide="file-text" class="w-4 h-4"></i> PDF</button>
                 </div>
 
-                <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 text-center py-20">
-                    <i data-lucide="file-bar-chart" class="w-16 h-16 mx-auto text-slate-200 mb-4"></i>
-                    <h3 class="text-lg font-bold text-slate-700 mb-2">Modul Laporan Siap</h3>
-                    <p class="text-sm text-slate-500 max-w-md mx-auto">Gunakan filter di atas untuk menghasilkan laporan spesifik. Data yang ditampilkan akan mencakup Nomor, Kode OPD, Register, Nopol, dan Status terkini.</p>
-                </div>
-            </div>
-
-            <!-- ====== TAB PENGATURAN (SECRET ADMIN) ====== -->
-            <div v-if="ui.isSecretUnlocked" v-show="activeTab === 'pengaturan'" class="space-y-6">
-                <header>
-                    <h1 class="text-3xl font-black text-rose-600 flex items-center gap-3">
-                        <i data-lucide="shield" class="w-8 h-8"></i> Pengaturan Sistem
-                    </h1>
-                    <p class="text-slate-500 font-medium">Modul konfigurasi khusus administrator tingkat lanjut.</p>
-                </header>
-
-                <div class="flex border-b border-slate-200 mb-6 gap-6">
-                    <button @click="adminTab = 'akun'" :class="adminTab === 'akun' ? 'border-rose-500 text-rose-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'" class="pb-3 border-b-2 transition-colors">Manajemen Akun</button>
-                    <button @click="adminTab = 'db'" :class="adminTab === 'db' ? 'border-rose-500 text-rose-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'" class="pb-3 border-b-2 transition-colors">Database</button>
-                    <button @click="adminTab = 'bulk'" :class="adminTab === 'bulk' ? 'border-rose-500 text-rose-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-700'" class="pb-3 border-b-2 transition-colors">Upload Massal</button>
-                </div>
-
-                <!-- Subtab Akun -->
-                <div v-show="adminTab === 'akun'" class="space-y-4">
-                    <div class="flex justify-end mb-4">
-                        <button @click="openModalAkun()" class="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl font-bold hover:bg-rose-100 flex items-center gap-2 text-sm">
-                            <i data-lucide="user-plus" class="w-4 h-4"></i> Tambah Akun
-                        </button>
+                <div v-if="reportData.length > 0" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                        <span class="font-bold text-sm text-slate-700">Hasil Laporan ({{ reportData.length }} data)</span>
                     </div>
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50">
+                            <thead class="bg-slate-50 text-[10px] text-slate-500 uppercase tracking-wider font-bold">
                                 <tr>
-                                    <th class="px-4 py-3 font-bold">Username</th>
-                                    <th class="px-4 py-3 font-bold">OPD/UPB</th>
-                                    <th class="px-4 py-3 font-bold">Hak Akses</th>
-                                    <th class="px-4 py-3 font-bold text-center">Aksi</th>
+                                    <th class="px-3 py-3">No</th>
+                                    <th class="px-3 py-3">OPD/UPB</th>
+                                    <th class="px-3 py-3">Nopol</th>
+                                    <th class="px-3 py-3">Merk/Type</th>
+                                    <th class="px-3 py-3">Peminjam</th>
+                                    <th class="px-3 py-3">Tgl Pinjam</th>
+                                    <th class="px-3 py-3">Tgl Kembali</th>
+                                    <th class="px-3 py-3">No Surat</th>
+                                    <th class="px-3 py-3">Status</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
-                                <tr v-for="u in dataUsers" :key="u.username">
+                                <tr v-for="(r,i) in reportData" :key="i" class="table-row-hover text-xs">
+                                    <td class="px-3 py-2.5 text-slate-400">{{ i+1 }}</td>
+                                    <td class="px-3 py-2.5 font-bold">{{ r.opd }}</td>
+                                    <td class="px-3 py-2.5 font-mono font-bold">{{ r.nopol }}</td>
+                                    <td class="px-3 py-2.5">{{ r.merk }}</td>
+                                    <td class="px-3 py-2.5">{{ r.peminjam }}</td>
+                                    <td class="px-3 py-2.5">{{ r.tglPinjam }}</td>
+                                    <td class="px-3 py-2.5">{{ r.tglKembali }}</td>
+                                    <td class="px-3 py-2.5">{{ r.noSurat }}</td>
+                                    <td class="px-3 py-2.5">
+                                        <span :class="{'bg-emerald-100 text-emerald-700':r.statusPinjam==='Dikembalikan','bg-amber-100 text-amber-700':r.statusPinjam==='Dipinjam'}" class="px-2 py-0.5 rounded text-[9px] font-bold uppercase">{{ r.statusPinjam }}</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div v-else class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 text-center py-16">
+                    <i data-lucide="file-bar-chart" class="w-14 h-14 mx-auto text-slate-200 mb-3"></i>
+                    <h3 class="text-sm font-bold text-slate-600 mb-1">Modul Laporan</h3>
+                    <p class="text-xs text-slate-400 max-w-md mx-auto">Klik "Tampilkan" untuk menghasilkan laporan berdasarkan filter yang dipilih.</p>
+                </div>
+            </div>
+
+            <!-- ====== PENGATURAN ====== -->
+            <div v-if="ui.isSecretUnlocked" v-show="activeTab === 'pengaturan'" class="space-y-6">
+                <header>
+                    <h1 class="text-2xl lg:text-3xl font-black text-rose-600 flex items-center gap-3"><i data-lucide="shield" class="w-7 h-7"></i> Pengaturan Sistem</h1>
+                    <p class="text-slate-500 font-medium text-sm">Manajemen akun pengguna dan konfigurasi sistem.</p>
+                </header>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-wrap gap-3 items-center justify-between">
+                    <div class="flex gap-2">
+                        <button @click="openModalAkun()" class="btn-danger text-xs"><i data-lucide="user-plus" class="w-4 h-4"></i> Tambah Akun</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @click="downloadOpdTemplate" class="btn-secondary text-xs"><i data-lucide="download" class="w-4 h-4"></i> Template OPD</button>
+                        <button @click="$refs.importOpdFile.click()" class="btn-secondary text-xs"><i data-lucide="upload" class="w-4 h-4"></i> Import OPD</button>
+                        <input type="file" ref="importOpdFile" class="hidden" accept=".xlsx,.xls" @change="importOpdExcel">
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-[10px] text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200">
+                                <tr>
+                                    <th class="px-4 py-3">No</th>
+                                    <th class="px-4 py-3">Username</th>
+                                    <th class="px-4 py-3">Password</th>
+                                    <th class="px-4 py-3">OPD/UPB</th>
+                                    <th class="px-4 py-3">Hak Akses</th>
+                                    <th class="px-4 py-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr v-for="(u,i) in dataUsers" :key="u.username" class="table-row-hover">
+                                    <td class="px-4 py-3 text-slate-400 text-xs">{{ i+1 }}</td>
                                     <td class="px-4 py-3 font-bold text-slate-800">{{ u.username }}</td>
-                                    <td class="px-4 py-3">{{ u.opd }}</td>
                                     <td class="px-4 py-3">
-                                        <div class="flex flex-wrap gap-1">
-                                            <span v-for="r in u.rights" :key="r" class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded font-bold uppercase">{{ r }}</span>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-mono text-xs">{{ u._showPwd ? u.password : '••••••••' }}</span>
+                                            <button @click="u._showPwd = !u._showPwd" class="text-slate-400 hover:text-slate-600 p-0.5"><i :data-lucide="u._showPwd ? 'eye-off' : 'eye'" class="w-3.5 h-3.5"></i></button>
                                         </div>
                                     </td>
+                                    <td class="px-4 py-3 text-xs">{{ u.opd }}</td>
+                                    <td class="px-4 py-3"><div class="flex flex-wrap gap-1"><span v-for="r in u.rights" :key="r" class="text-[8px] bg-slate-100 px-1.5 py-0.5 rounded font-bold uppercase">{{ r }}</span></div></td>
                                     <td class="px-4 py-3">
-                                        <div class="flex justify-center gap-2">
-                                            <button @click="openModalAkun(u)" class="text-blue-500 hover:bg-blue-50 p-1.5 rounded"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                                            <button @click="deleteAkun(u.username)" class="text-rose-500 hover:bg-rose-50 p-1.5 rounded"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                        <div class="flex justify-center gap-1">
+                                            <button @click="openModalAkun(u)" class="text-blue-500 hover:bg-blue-50 p-1.5 rounded-lg" title="Edit"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i></button>
+                                            <button @click="deleteAkun(u.username)" class="text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg" title="Hapus"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -505,153 +612,139 @@
                         </table>
                     </div>
                 </div>
+            </div>
 
-                <!-- Subtab Database -->
-                <div v-show="adminTab === 'db'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200">
-                        <h3 class="font-bold mb-2 flex items-center gap-2"><i data-lucide="download-cloud" class="w-5 h-5"></i> Backup Database</h3>
-                        <p class="text-xs text-slate-500 mb-4">Unduh seluruh data BPKB, Akun, dan Sirkulasi.</p>
-                        <button @click="mockAction('Database di-backup')" class="btn-secondary w-full justify-center">Jalankan Backup</button>
+            <!-- ====== DATABASE ====== -->
+            <div v-if="ui.isSecretUnlocked" v-show="activeTab === 'database'" class="space-y-6">
+                <header>
+                    <h1 class="text-2xl lg:text-3xl font-black text-rose-600 flex items-center gap-3"><i data-lucide="database" class="w-7 h-7"></i> Manajemen Database</h1>
+                    <p class="text-slate-500 font-medium text-sm">Backup, import dan reset seluruh database sistem.</p>
+                </header>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Backup -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                        <h3 class="font-bold flex items-center gap-2 text-sm"><i data-lucide="download-cloud" class="w-5 h-5 text-blue-500"></i> Backup Database</h3>
+                        <p class="text-xs text-slate-500">Unduh data dalam format JSON untuk kebutuhan backup.</p>
+                        <button @click="backupAll" class="btn-primary w-full justify-center text-xs"><i data-lucide="hard-drive-download" class="w-4 h-4"></i> Backup Seluruh Database</button>
+                        <div class="border-t border-slate-100 pt-4">
+                            <label class="block text-[10px] font-bold mb-1.5 text-slate-500 uppercase tracking-wider">Backup per OPD/UPB</label>
+                            <select v-model="dbOpdSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm input-modern mb-2">
+                                <option value="">-- Pilih OPD --</option>
+                                <option v-for="o in opdListAll" :key="o">{{ o }}</option>
+                            </select>
+                            <button @click="backupByOpd" :disabled="!dbOpdSelect" class="btn-secondary w-full justify-center text-xs disabled:opacity-40"><i data-lucide="download" class="w-4 h-4"></i> Backup OPD Terpilih</button>
+                        </div>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200">
-                        <h3 class="font-bold mb-2 flex items-center gap-2"><i data-lucide="upload-cloud" class="w-5 h-5 text-rose-500"></i> Import Database</h3>
-                        <p class="text-xs text-slate-500 mb-4">Pilih metode pemulihan data dari file backup.</p>
+
+                    <!-- Import -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                        <h3 class="font-bold flex items-center gap-2 text-sm"><i data-lucide="upload-cloud" class="w-5 h-5 text-emerald-500"></i> Import Database</h3>
+                        <p class="text-xs text-slate-500">Pilih file JSON backup untuk dikembalikan ke sistem.</p>
                         <div class="space-y-2">
-                            <button @click="mockAction('Import Tambah Baru (Keep Data)')" class="btn-secondary w-full text-xs justify-center bg-slate-50">Tambah Baru (Tanpa hapus lama)</button>
-                            <button @click="mockAction('Import Reset Total')" class="btn-secondary w-full text-xs justify-center bg-rose-50 text-rose-600 hover:bg-rose-100 border-rose-100">Reset Total & Import Baru</button>
+                            <button @click="importDbMode='keep'; $refs.importDbFile.click()" class="btn-secondary w-full justify-center text-xs bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"><i data-lucide="plus-circle" class="w-4 h-4"></i> Import (Tanpa Hapus Data Lama)</button>
+                            <button @click="importDbMode='replace'; $refs.importDbFile.click()" class="btn-danger w-full justify-center text-xs"><i data-lucide="replace" class="w-4 h-4"></i> Import (Hapus Data Lama)</button>
+                            <input type="file" ref="importDbFile" class="hidden" accept=".json" @change="importDatabase">
                         </div>
                     </div>
-                </div>
 
-                <!-- Subtab Bulk -->
-                <div v-show="adminTab === 'bulk'" class="bg-white p-6 rounded-2xl border border-slate-200">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <h3 class="font-bold mb-4 border-b pb-2">Upload Massal File BPKB</h3>
-                            <div class="space-y-4">
-                                <select class="w-full bg-slate-50 rounded-lg px-3 py-2 text-sm border border-slate-200">
-                                    <option>Pilih OPD Sasaran...</option>
-                                    <option>Seluruh OPD</option>
-                                </select>
-                                <input type="file" multiple class="w-full text-xs">
-                                <button @click="mockAction('Upload massal BPKB selesai')" class="btn-primary w-full justify-center">Proses Upload BPKB</button>
-                            </div>
-                        </div>
-                        <div>
-                            <h3 class="font-bold mb-4 border-b pb-2">Upload Massal Gambar Kendaraan</h3>
-                            <div class="space-y-4">
-                                <select class="w-full bg-slate-50 rounded-lg px-3 py-2 text-sm border border-slate-200">
-                                    <option>Pilih OPD Sasaran...</option>
-                                    <option>Seluruh OPD</option>
-                                </select>
-                                <input type="file" multiple accept="image/*" class="w-full text-xs">
-                                <button @click="mockAction('Upload massal Gambar selesai')" class="btn-primary w-full justify-center">Proses Upload Gambar</button>
-                            </div>
-                        </div>
+                    <!-- Reset -->
+                    <div class="md:col-span-2 bg-gradient-to-r from-rose-50 to-red-50 p-6 rounded-2xl border border-rose-200 shadow-sm">
+                        <h3 class="font-bold flex items-center gap-2 text-sm text-rose-700"><i data-lucide="alert-octagon" class="w-5 h-5"></i> Reset Seluruh Database</h3>
+                        <p class="text-xs text-rose-500 mt-1 mb-4">Tindakan ini akan <strong>menghapus seluruh data</strong> termasuk BPKB, Akun, dan Sirkulasi. Tidak dapat dikembalikan!</p>
+                        <button @click="resetDatabase" class="px-6 py-2.5 bg-rose-600 text-white rounded-xl font-bold text-xs hover:bg-rose-700 transition-colors flex items-center gap-2"><i data-lucide="trash" class="w-4 h-4"></i> Reset Seluruh Database</button>
                     </div>
                 </div>
             </div>
 
+            </div>
         </main>
     </div>
 
     <!-- ==================== MODALS ==================== -->
 
     <!-- Modal Form BPKB -->
-    <div v-if="modals.bpkb" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl">
-            <div class="p-6 bg-slate-50 border-b flex justify-between items-center">
-                <h3 class="font-black text-lg">{{ bpkbForm.id ? 'Edit' : 'Tambah' }} Data BPKB</h3>
-                <button @click="modals.bpkb = false" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <div v-if="modals.bpkb" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 modal-overlay">
+        <div class="bg-white w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl modal-content max-h-[90vh] flex flex-col">
+            <div class="p-5 bg-slate-50 border-b flex justify-between items-center shrink-0">
+                <h3 class="font-black text-sm">{{ bpkbForm.id ? 'Edit' : 'Tambah' }} Data BPKB</h3>
+                <button @click="modals.bpkb=false" class="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <form @submit.prevent="saveBpkb" class="p-6 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-bold mb-1">Kode OPD</label><input v-model="bpkbForm.kodeOpd" required class="w-full bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 text-sm"></div>
-                    <div><label class="block text-xs font-bold mb-1">Nama OPD/UPB</label><input v-model="bpkbForm.namaOpd" required class="w-full bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 text-sm"></div>
-                    <div><label class="block text-xs font-bold mb-1">No Register</label><input v-model="bpkbForm.noRegister" required class="w-full bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 text-sm"></div>
-                    <div>
-                        <label class="block text-xs font-bold mb-1">Jenis</label>
-                        <select v-model="bpkbForm.jenis" class="w-full bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 text-sm">
-                            <option>Roda 2</option><option>Roda 3</option><option>Roda 4</option>
+            <form @submit.prevent="saveBpkb" class="p-5 space-y-3 overflow-y-auto flex-1">
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">Kode OPD</label><input v-model="bpkbForm.kodeOpd" required class="w-full bg-slate-50 rounded-xl px-3 py-2 border border-slate-200 text-sm input-modern"></div>
+                    <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">Nama OPD/UPB</label>
+                        <select v-model="bpkbForm.namaOpd" required class="w-full bg-slate-50 rounded-xl px-3 py-2 border border-slate-200 text-sm input-modern">
+                            <option value="">-- Pilih OPD --</option>
+                            <option v-for="o in opdListAll" :key="o">{{ o }}</option>
                         </select>
                     </div>
-                    <div><label class="block text-xs font-bold mb-1">Nama Barang</label><input v-model="bpkbForm.namaBarang" required class="w-full bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 text-sm"></div>
-                    <div><label class="block text-xs font-bold mb-1">Merk/Type</label><input v-model="bpkbForm.merkType" required class="w-full bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 text-sm"></div>
-                    <div class="col-span-2"><label class="block text-xs font-bold mb-1">Nomor Polisi</label><input v-model="bpkbForm.noPolisi" required placeholder="Contoh: A 1234 XX" class="w-full bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 text-sm font-mono uppercase font-bold"></div>
-                    
-                    <div>
-                        <label class="block text-xs font-bold mb-1">File Scan BPKB</label>
-                        <input type="file" @change="(e) => handleFileUpload(e, 'scanBpkb')" class="text-xs">
+                    <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">No Register</label><input v-model="bpkbForm.noRegister" required class="w-full bg-slate-50 rounded-xl px-3 py-2 border border-slate-200 text-sm input-modern"></div>
+                    <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">Jenis</label>
+                        <select v-model="bpkbForm.jenis" class="w-full bg-slate-50 rounded-xl px-3 py-2 border border-slate-200 text-sm input-modern"><option>Roda 2</option><option>Roda 3</option><option>Roda 4</option></select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold mb-1">Foto Kendaraan</label>
-                        <input type="file" @change="(e) => handleFileUpload(e, 'scanGambar')" accept="image/*" class="text-xs">
-                    </div>
+                    <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">Nama Barang</label><input v-model="bpkbForm.namaBarang" required class="w-full bg-slate-50 rounded-xl px-3 py-2 border border-slate-200 text-sm input-modern"></div>
+                    <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">Merk/Type</label><input v-model="bpkbForm.merkType" required class="w-full bg-slate-50 rounded-xl px-3 py-2 border border-slate-200 text-sm input-modern"></div>
+                    <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">Nomor Polisi</label><input v-model="bpkbForm.noPolisi" required placeholder="A 1234 XX" class="w-full bg-slate-50 rounded-xl px-3 py-2 border border-slate-200 text-sm font-mono uppercase font-bold input-modern"></div>
+                    <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">Tahun Perolehan</label><input v-model="bpkbForm.tahunPerolehan" type="number" min="1900" max="2099" class="w-full bg-slate-50 rounded-xl px-3 py-2 border border-slate-200 text-sm input-modern"></div>
+                    <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">No. Rangka</label><input v-model="bpkbForm.noRangka" class="w-full bg-slate-50 rounded-xl px-3 py-2 border border-slate-200 text-sm input-modern font-mono"></div>
+                    <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">No. Mesin</label><input v-model="bpkbForm.noMesin" class="w-full bg-slate-50 rounded-xl px-3 py-2 border border-slate-200 text-sm input-modern font-mono"></div>
+                    <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">File Scan BPKB</label><input type="file" @change="(e) => handleFileUpload(e, 'scanBpkb')" class="text-[10px] w-full"></div>
+                    <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">Foto Kendaraan</label><input type="file" @change="(e) => handleFileUpload(e, 'scanGambar')" accept="image/*" class="text-[10px] w-full"></div>
                 </div>
-                <div class="pt-4 flex gap-3">
-                    <button type="submit" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700">Simpan Data</button>
-                    <button type="button" @click="modals.bpkb = false" class="px-6 bg-slate-100 font-bold py-3 rounded-xl">Batal</button>
+                <div class="pt-3 flex gap-3">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded-xl hover:bg-blue-700 text-sm">Simpan Data</button>
+                    <button type="button" @click="modals.bpkb=false" class="px-6 bg-slate-100 font-bold py-2.5 rounded-xl text-sm">Batal</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal Akun -->
-    <div v-if="modals.akun" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl">
-            <div class="p-6 bg-rose-50 border-b border-rose-100 flex justify-between items-center">
-                <h3 class="font-black text-rose-700 text-lg">{{ akunForm.isEdit ? 'Edit' : 'Tambah' }} Akun</h3>
-                <button @click="modals.akun = false" class="text-rose-400"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <!-- Modal Detail Kendaraan (Enhanced) -->
+    <div v-if="modals.detail" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 modal-overlay">
+        <div class="bg-white w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] modal-content">
+            <div class="p-4 border-b flex justify-between items-center bg-gradient-to-r from-blue-50 to-slate-50 shrink-0">
+                <h3 class="font-black text-sm flex items-center gap-2"><i data-lucide="car" class="w-5 h-5 text-blue-600"></i> Rincian Kendaraan</h3>
+                <button @click="modals.detail=false" class="p-1 hover:bg-slate-200 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <form @submit.prevent="saveAkun" class="p-6 space-y-4">
-                <div><label class="block text-xs font-bold mb-1">Username</label><input v-model="akunForm.username" :disabled="akunForm.isEdit" required class="w-full bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 text-sm"></div>
-                <div><label class="block text-xs font-bold mb-1">OPD/UPB</label><input v-model="akunForm.opd" required class="w-full bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 text-sm"></div>
-                <div><label class="block text-xs font-bold mb-1">Password</label><input v-model="akunForm.password" :placeholder="akunForm.isEdit ? 'Kosongkan jika tidak diubah' : ''" :required="!akunForm.isEdit" class="w-full bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 text-sm"></div>
-                <div>
-                    <label class="block text-xs font-bold mb-2">Hak Akses</label>
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <label v-for="r in availableRights" :key="r" class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" :value="r" v-model="akunForm.rights" class="rounded text-rose-500 focus:ring-rose-500"> {{ r }}
-                        </label>
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-rose-600 text-white font-bold py-3 rounded-xl hover:bg-rose-700 mt-4">Simpan Akun</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Detail Kendaraan -->
-    <div v-if="modals.detail" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-3xl rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="p-4 border-b flex justify-between items-center bg-slate-50">
-                <h3 class="font-black text-lg flex items-center gap-2"><i data-lucide="car-front" class="w-5 h-5"></i> Rincian Kendaraan: {{ detailData.noPolisi }}</h3>
-                <button @click="modals.detail = false" class="p-1 hover:bg-slate-200 rounded"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="p-6 overflow-y-auto">
+            <div class="p-6 overflow-y-auto flex-1">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <p class="font-bold text-slate-800 border-b pb-2 mb-3">Informasi Utama</p>
+                        <div class="bg-blue-600 text-white px-4 py-3 rounded-xl mb-4">
+                            <p class="text-[10px] font-bold uppercase opacity-70">Nomor Polisi</p>
+                            <h2 class="text-2xl font-black font-mono tracking-wider">{{ detailData.noPolisi }}</h2>
+                        </div>
                         <table class="w-full text-sm">
                             <tbody>
-                                <tr><td class="py-1 text-slate-500">OPD</td><td class="font-bold">{{ detailData.namaOpd }}</td></tr>
-                                <tr><td class="py-1 text-slate-500">Barang</td><td class="font-bold">{{ detailData.namaBarang }}</td></tr>
-                                <tr><td class="py-1 text-slate-500">Merk/Type</td><td class="font-bold">{{ detailData.merkType }}</td></tr>
-                                <tr><td class="py-1 text-slate-500">Status</td><td class="font-bold text-blue-600">{{ detailData.status }}</td></tr>
+                                <tr class="border-b border-slate-100"><td class="py-2 text-slate-500 text-xs w-32">OPD/UPB</td><td class="py-2 font-bold text-xs">{{ detailData.namaOpd }}</td></tr>
+                                <tr class="border-b border-slate-100"><td class="py-2 text-slate-500 text-xs">Kode OPD</td><td class="py-2 font-mono text-xs">{{ detailData.kodeOpd }}</td></tr>
+                                <tr class="border-b border-slate-100"><td class="py-2 text-slate-500 text-xs">Nama Barang</td><td class="py-2 font-bold text-xs">{{ detailData.namaBarang }}</td></tr>
+                                <tr class="border-b border-slate-100"><td class="py-2 text-slate-500 text-xs">Merk/Type</td><td class="py-2 font-bold text-xs">{{ detailData.merkType }}</td></tr>
+                                <tr class="border-b border-slate-100"><td class="py-2 text-slate-500 text-xs">Jenis</td><td class="py-2 text-xs">{{ detailData.jenis }}</td></tr>
+                                <tr class="border-b border-slate-100"><td class="py-2 text-slate-500 text-xs">No Register</td><td class="py-2 font-mono text-xs">{{ detailData.noRegister }}</td></tr>
+                                <tr class="border-b border-slate-100"><td class="py-2 text-slate-500 text-xs">Tahun Perolehan</td><td class="py-2 text-xs">{{ detailData.tahunPerolehan || '-' }}</td></tr>
+                                <tr class="border-b border-slate-100"><td class="py-2 text-slate-500 text-xs">No. Rangka</td><td class="py-2 font-mono text-xs">{{ detailData.noRangka || '-' }}</td></tr>
+                                <tr class="border-b border-slate-100"><td class="py-2 text-slate-500 text-xs">No. Mesin</td><td class="py-2 font-mono text-xs">{{ detailData.noMesin || '-' }}</td></tr>
+                                <tr><td class="py-2 text-slate-500 text-xs">Status</td><td class="py-2"><span :class="{'bg-emerald-100 text-emerald-700':detailData.status==='BPKB Tersedia','bg-amber-100 text-amber-700':detailData.status==='BPKB Dipinjam','bg-rose-100 text-rose-700':detailData.status==='BPKB Terlambat Kembali'}" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase">{{ detailData.status }}</span></td></tr>
                             </tbody>
                         </table>
                     </div>
                     <div class="space-y-4">
-                        <div class="border rounded-xl p-2 bg-slate-50">
-                            <p class="text-xs font-bold mb-2 text-center text-slate-500">Foto Kendaraan</p>
-                            <img v-if="detailData.scanGambar" :src="detailData.scanGambar" class="w-full h-40 object-cover rounded-lg border">
-                            <div v-else class="h-40 flex items-center justify-center border-2 border-dashed border-slate-300 rounded-lg text-slate-400 text-xs">Tidak ada foto</div>
-                        </div>
-                        <div class="border rounded-xl p-2 bg-slate-50">
-                            <p class="text-xs font-bold mb-2 text-center text-slate-500">Scan BPKB</p>
-                            <div v-if="detailData.scanBpkb" class="h-20 flex flex-col items-center justify-center bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-200">
-                                <i data-lucide="file-check" class="w-6 h-6 mb-1"></i><span class="text-xs font-bold">Dokumen Tersedia</span>
+                        <div class="border border-slate-200 rounded-xl overflow-hidden">
+                            <p class="text-[10px] font-bold text-center text-slate-500 bg-slate-50 py-2 border-b">Foto Kendaraan</p>
+                            <div class="p-3">
+                                <img v-if="detailData.scanGambar" :src="detailData.scanGambar" class="w-full h-48 object-cover rounded-lg border border-slate-200">
+                                <div v-else class="h-48 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-lg text-slate-300"><i data-lucide="image-off" class="w-10 h-10 mb-2"></i><span class="text-[10px] font-bold">Tidak ada foto</span></div>
                             </div>
-                            <div v-else class="h-20 flex items-center justify-center border-2 border-dashed border-slate-300 rounded-lg text-slate-400 text-xs">Belum diupload</div>
+                        </div>
+                        <div class="border border-slate-200 rounded-xl overflow-hidden">
+                            <p class="text-[10px] font-bold text-center text-slate-500 bg-slate-50 py-2 border-b">Scan BPKB</p>
+                            <div class="p-3">
+                                <div v-if="detailData.scanBpkb" class="h-24 flex flex-col items-center justify-center bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-200 cursor-pointer hover:bg-emerald-100 transition-colors" @click="viewFile(detailData.scanBpkb)">
+                                    <i data-lucide="file-check" class="w-8 h-8 mb-1"></i><span class="text-[10px] font-bold">Dokumen Tersedia (Klik untuk lihat)</span>
+                                </div>
+                                <div v-else class="h-24 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-lg text-slate-300"><i data-lucide="file-x" class="w-8 h-8 mb-1"></i><span class="text-[10px] font-bold">Belum diupload</span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -659,439 +752,682 @@
         </div>
     </div>
 
-    <!-- Modal Print Preview -->
-    <div v-if="modals.print" class="fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6">
-            <h3 class="font-black text-lg mb-4 text-center">Persiapan Cetak Kartu Kendali</h3>
-            <div class="bg-amber-50 text-amber-800 p-4 rounded-xl text-sm mb-4 border border-amber-200">
-                Anda dapat menyesuaikan nomor surat sebelum mencetak. Bulan Romawi telah diisi otomatis.
+    <!-- Modal Akun -->
+    <div v-if="modals.akun" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 modal-overlay">
+        <div class="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl modal-content">
+            <div class="p-5 bg-rose-50 border-b border-rose-100 flex justify-between items-center">
+                <h3 class="font-black text-rose-700 text-sm">{{ akunForm.isEdit ? 'Edit' : 'Tambah' }} Akun</h3>
+                <button @click="modals.akun=false" class="text-rose-400 p-1 hover:bg-rose-100 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <div class="mb-6">
-                <label class="block text-xs font-bold mb-1 text-slate-600">Edit Nomor Surat (Bagian Tengah)</label>
-                <div class="flex items-center gap-2 font-mono text-sm bg-slate-100 p-3 rounded-lg border border-slate-200">
-                    <span>000.2.3.2/</span>
-                    <input v-model="printConfig.nomorTengah" type="text" class="w-24 px-2 py-1 text-center bg-white border border-slate-300 rounded font-bold" placeholder="...">
-                    <span>/{{ printConfig.bulanRomawi }}/Aset/{{ printConfig.tahun }}</span>
+            <form @submit.prevent="saveAkun" class="p-5 space-y-3">
+                <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">Username</label><input v-model="akunForm.username" :disabled="akunForm.isEdit" required class="w-full bg-slate-50 rounded-xl px-3 py-2 border border-slate-200 text-sm input-modern disabled:opacity-50"></div>
+                <div><label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">OPD/UPB</label>
+                    <select v-model="akunForm.opd" required class="w-full bg-slate-50 rounded-xl px-3 py-2 border border-slate-200 text-sm input-modern">
+                        <option value="">-- Pilih OPD --</option>
+                        <option v-for="o in opdListAll" :key="o">{{ o }}</option>
+                    </select>
                 </div>
+                <div>
+                    <label class="block text-[10px] font-bold mb-1 text-slate-500 uppercase">Password</label>
+                    <div class="relative">
+                        <input v-model="akunForm.password" :type="akunForm._showPwd ? 'text' : 'password'" :placeholder="akunForm.isEdit ? 'Kosongkan jika tidak diubah' : ''" :required="!akunForm.isEdit" class="w-full bg-slate-50 rounded-xl px-3 py-2 pr-10 border border-slate-200 text-sm input-modern">
+                        <button type="button" @click="akunForm._showPwd = !akunForm._showPwd" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><i :data-lucide="akunForm._showPwd ? 'eye-off' : 'eye'" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold mb-2 text-slate-500 uppercase">Hak Akses</label>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <label v-for="r in availableRights" :key="r" class="flex items-center gap-2 cursor-pointer bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">
+                            <input type="checkbox" :value="r" v-model="akunForm.rights" class="rounded text-rose-500 focus:ring-rose-500 w-3.5 h-3.5"> {{ r }}
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-rose-600 text-white font-bold py-2.5 rounded-xl hover:bg-rose-700 text-sm mt-2">Simpan Akun</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Print Preview Kartu Kendali -->
+    <div v-if="modals.print" class="fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 modal-overlay">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl modal-content max-h-[90vh] flex flex-col">
+            <div class="p-5 border-b flex justify-between items-center bg-slate-50 shrink-0">
+                <h3 class="font-black text-sm">Cetak Kartu Kendali Peminjaman BPKB</h3>
+                <button @click="modals.print=false" class="p-1 hover:bg-slate-200 rounded-lg"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <div class="flex gap-3">
-                <button @click="executePrint" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 flex items-center justify-center gap-2">
-                    <i data-lucide="printer" class="w-5 h-5"></i> Cetak Sekarang
-                </button>
-                <button @click="modals.print = false" class="px-6 bg-slate-200 font-bold py-3 rounded-xl text-slate-700 hover:bg-slate-300">Batal</button>
+            <div class="p-5 space-y-4 overflow-y-auto flex-1">
+                <div class="bg-amber-50 text-amber-800 p-3 rounded-xl text-xs border border-amber-200 flex items-start gap-2">
+                    <i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                    <span>Sesuaikan nomor surat sebelum mencetak. Bulan Romawi terisi otomatis.</span>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold mb-1.5 text-slate-500 uppercase">Nomor Surat (Bagian Tengah)</label>
+                    <div class="flex items-center gap-1.5 font-mono text-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <span class="text-slate-500">000.2.3.2/</span>
+                        <input v-model="printConfig.nomorTengah" type="text" class="w-20 px-2 py-1 text-center bg-white border border-slate-300 rounded-lg font-bold input-modern" placeholder="...">
+                        <span class="text-slate-500">/{{ printConfig.bulanRomawi }}/Aset/{{ printConfig.tahun }}</span>
+                    </div>
+                </div>
+                <div v-if="printData" class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-1 text-xs">
+                    <div class="flex justify-between"><span class="text-slate-500">Peminjam:</span><span class="font-bold">{{ printData.namaPeminjam }}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Nopol:</span><span class="font-bold font-mono">{{ printData.unit.noPolisi }}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Merk/Type:</span><span class="font-bold">{{ printData.unit.merkType }}</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">No. Surat:</span><span class="font-bold">{{ printData.noSurat }}</span></div>
+                </div>
+                <div class="flex gap-3">
+                    <button @click="printKartuKendaliPDF" class="flex-1 btn-primary justify-center text-xs py-3"><i data-lucide="file-text" class="w-4 h-4"></i> Cetak PDF</button>
+                    <button @click="printKartuKendaliExcel" class="flex-1 btn-secondary justify-center text-xs py-3"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Cetak Excel</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- ==================== AREA CETAK (PRINT ONLY) ==================== -->
-    <div id="print-section" class="hidden print-only bg-white text-black font-serif text-sm">
-        <div v-if="printData" class="max-w-[210mm] mx-auto pt-8">
-            <h1 class="text-center font-bold text-xl mb-1" style="font-family: 'Times New Roman', Times, serif;">KARTU KENDALI PEMINJAMAN BPKB</h1>
-            <p class="text-center mb-8" style="font-family: 'Times New Roman', Times, serif;">
-                Nomor : 000.2.3.2/{{ printConfig.nomorTengah }}/{{ printConfig.bulanRomawi }}/Aset/{{ printConfig.tahun }}
-            </p>
-
-            <table class="w-full mb-8" style="font-family: 'Times New Roman', Times, serif;">
-                <tbody>
-                    <tr><td class="w-48 py-1">Nomor Surat</td><td class="w-4">:</td><td>{{ printData.noSurat }}</td></tr>
-                    <tr><td class="py-1">Nomor</td><td>:</td><td>{{ printData.unit.noRegister }}</td></tr>
-                    <tr><td class="py-1">Nomor Polisi</td><td>:</td><td>{{ printData.unit.noPolisi }}</td></tr>
-                    <tr><td class="py-1">Merk/Type</td><td>:</td><td>{{ printData.unit.merkType }}</td></tr>
-                    <tr><td class="py-1">Kode OPD</td><td>:</td><td>{{ printData.unit.kodeOpd }}</td></tr>
-                    <tr><td class="py-1">Nama OPD/UPB</td><td>:</td><td>{{ printData.unit.namaOpd }}</td></tr>
-                    <tr><td class="py-1">Tanggal Pinjam</td><td>:</td><td>{{ printData.tglPinjam }}</td></tr>
-                    <tr><td class="py-1">Tgl Estimasi Kembali</td><td>:</td><td>{{ printData.tglKembali }}</td></tr>
-                    <tr><td class="py-1">Nama Peminjam</td><td>:</td><td>{{ printData.namaPeminjam }}</td></tr>
-                </tbody>
-            </table>
-
-            <div class="w-full mt-12" style="font-family: 'Times New Roman', Times, serif;">
-                <div class="flex justify-between w-full">
-                    <div class="w-1/2">
-                        <p class="font-bold mb-6">Peminjaman,</p>
-                        <div class="flex justify-between w-[90%]">
-                            <div class="text-center w-1/2">
-                                <p class="mb-16">Peminjam,</p>
-                                <p class="underline font-bold">({{ printData.namaPeminjam }})</p>
-                            </div>
-                            <div class="text-center w-1/2">
-                                <p>Cilegon, ........................</p>
-                                <p class="mb-12">Petugas Aset,</p>
-                                <p class="underline font-bold">(................................)</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-between w-full mt-12">
-                    <div class="w-1/2">
-                        <p class="font-bold mb-6">Pengembalian,</p>
-                        <div class="flex justify-between w-[90%]">
-                            <div class="text-center w-1/2">
-                                <p class="mb-16">Peminjam,</p>
-                                <p class="underline font-bold">({{ printData.namaPeminjam }})</p>
-                            </div>
-                            <div class="text-center w-1/2">
-                                <p>Cilegon, ........................</p>
-                                <p class="mb-12">Petugas Aset,</p>
-                                <p class="underline font-bold">(................................)</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- Modal Import OPD -->
+    <div v-if="modals.importOpd" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 modal-overlay">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl modal-content p-6 space-y-4">
+            <h3 class="font-black text-sm">Pilih Metode Import OPD</h3>
+            <p class="text-xs text-slate-500">File OPD telah diproses. Pilih cara import:</p>
+            <div class="space-y-2">
+                <button @click="executeImportOpd('keep')" class="btn-secondary w-full justify-center text-xs py-3 bg-emerald-50 text-emerald-700 border-emerald-200"><i data-lucide="plus-circle" class="w-4 h-4"></i> Tambah Data (Tanpa Hapus Lama)</button>
+                <button @click="executeImportOpd('replace')" class="btn-danger w-full justify-center text-xs py-3"><i data-lucide="replace" class="w-4 h-4"></i> Hapus Data Lama & Import Baru</button>
             </div>
+            <button @click="modals.importOpd=false" class="btn-secondary w-full justify-center text-xs">Batal</button>
+        </div>
+    </div>
+
+    <!-- Modal File Viewer -->
+    <div v-if="modals.fileViewer" class="fixed inset-0 z-[70] bg-black/90 flex items-center justify-center p-4 modal-overlay">
+        <div class="relative max-w-4xl w-full max-h-[90vh]">
+            <button @click="modals.fileViewer=false" class="absolute -top-12 right-0 text-white/80 hover:text-white flex items-center gap-2 text-sm font-bold"><i data-lucide="x" class="w-5 h-5"></i> Tutup</button>
+            <img :src="fileViewerSrc" class="max-w-full max-h-[85vh] mx-auto rounded-xl shadow-2xl object-contain">
         </div>
     </div>
 
 </div>
 
-<style>
-    .btn-primary { @apply px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors flex items-center gap-2; }
-    .btn-secondary { @apply px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-200 transition-colors flex items-center gap-2 border border-slate-200; }
-</style>
-
 <script>
-    const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
+const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
-    // Helper: Convert Date to Roman Month
-    const getRomanMonth = () => {
-        const roman = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
-        return roman[new Date().getMonth()];
-    };
+const getRomanMonth = () => {
+    const r = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+    return r[new Date().getMonth()];
+};
 
-    createApp({
-        setup() {
-            // State
-            const auth = ref({
-                isLoggedIn: false,
-                user: null,
-                showPassword: false,
-                errorMsg: ''
-            });
+const DEFAULT_OPD_LIST = [
+    "Sekretariat Daerah","Sekretariat DPRD","Inspektorat","Badan Perencanaan Pembangunan Daerah",
+    "Badan Pengelolaan Keuangan dan Aset Daerah","Badan Kepegawaian dan Pengembangan SDM",
+    "Dinas Pendidikan dan Kebudayaan","Dinas Kesehatan","RSUD","Dinas Pekerjaan Umum dan Penataan Ruang",
+    "Dinas Perumahan Rakyat dan Kawasan Permukiman","Satuan Polisi Pamong Praja",
+    "Badan Penanggulangan Bencana Daerah","Dinas Sosial","Dinas Tenaga Kerja",
+    "Dinas Pemberdayaan Perempuan Perlindungan Anak Pengendalian Penduduk dan KB",
+    "Dinas Ketahanan Pangan","Dinas Lingkungan Hidup","Dinas Kependudukan dan Pencatatan Sipil",
+    "Dinas Pemberdayaan Masyarakat dan Desa","Dinas Perhubungan",
+    "Dinas Komunikasi Informatika Statistik dan Persandian","Dinas Koperasi UMKM",
+    "Dinas Penanaman Modal dan Pelayanan Terpadu Satu Pintu","Dinas Pemuda dan Olahraga",
+    "Dinas Perpustakaan dan Kearsipan","Dinas Perikanan dan Pertanian","Dinas Perdagangan dan Perindustrian",
+    "Kecamatan Cibeber","Kecamatan Cilegon","Kecamatan Citangkil","Kecamatan Ciwandan",
+    "Kecamatan Gerogol","Kecamatan Jombang","Kecamatan Pulomerak","Kecamatan Purwakarta",
+    "Badan Pendapatan Daerah","Badan Kesatuan Bangsa dan Politik"
+];
 
-            const ui = ref({
-                isSecretUnlocked: false,
-                date: '', time: ''
-            });
+createApp({
+    setup() {
+        const auth = ref({ isLoggedIn: false, user: null, showPassword: false, errorMsg: '' });
+        const ui = ref({ isSecretUnlocked: false, date: '', time: '', sidebarOpen: false });
+        const activeTab = ref('dashboard');
+        const loginForm = ref({ username: '', password: '' });
 
-            const activeTab = ref('dashboard');
-            const adminTab = ref('akun');
+        const menuTabs = [
+            { id: 'dashboard', label: 'Dashboard', icon: 'layout-dashboard' },
+            { id: 'data', label: 'Daftar BPKB', icon: 'folder-open' },
+            { id: 'sirkulasi', label: 'Sirkulasi Dokumen', icon: 'repeat' },
+            { id: 'laporan', label: 'Laporan', icon: 'file-text' }
+        ];
 
-            const loginForm = ref({ username: '', password: '' });
+        const dataUsers = ref([
+            { username: 'admin', opd: 'Badan Pengelolaan Keuangan dan Aset Daerah', password: 'admin', rights: ['Melihat Data','Mengedit Data','Menghapus Data','Import Data','Mencetak Data'], photo: null, _showPwd: false },
+            { username: 'user1', opd: 'Dinas Kesehatan', password: 'user1', rights: ['Melihat Data','Mencetak Data'], photo: null, _showPwd: false }
+        ]);
 
-            // Data Stores
-            const dataUsers = ref([
-                { username: 'admin', opd: 'BPKAD', password: 'admin', rights: ['Melihat Data', 'Mengedit Data', 'Menghapus Data', 'Import Data', 'Mencetak Data'], photo: null },
-                { username: 'user1', opd: 'Dinas Kesehatan', password: 'user1', rights: ['Melihat Data', 'Mencetak Data'], photo: null }
-            ]);
+        const dataInventory = ref([
+            { id: 1, kodeOpd: '1.02.01', namaOpd: 'Dinas Kesehatan', noRegister: '0001', jenis: 'Roda 4', namaBarang: 'Ambulance', merkType: 'Toyota Hiace', noPolisi: 'A 9901 XX', status: 'BPKB Tersedia', scanBpkb: null, scanGambar: null, tahunPerolehan: '2020', noRangka: 'MHFXX8JS4L0001234', noMesin: '2KD1234567' },
+            { id: 2, kodeOpd: '1.03.01', namaOpd: 'Dinas Pekerjaan Umum dan Penataan Ruang', noRegister: '0023', jenis: 'Roda 4', namaBarang: 'Mobil Operasional', merkType: 'Mitsubishi Triton', noPolisi: 'A 8821 AZ', status: 'BPKB Dipinjam', scanBpkb: null, scanGambar: null, tahunPerolehan: '2021', noRangka: 'MMBGTKL40MH12345', noMesin: '4N15U123456' },
+            { id: 3, kodeOpd: '1.01.01', namaOpd: 'Sekretariat Daerah', noRegister: '0045', jenis: 'Roda 2', namaBarang: 'Motor Dinas', merkType: 'Honda Vario 125', noPolisi: 'A 2234 BC', status: 'BPKB Terlambat Kembali', scanBpkb: null, scanGambar: null, tahunPerolehan: '2019', noRangka: 'MH1JFM2189K12345', noMesin: 'JFM2E1234567' },
+            { id: 4, kodeOpd: '1.05.01', namaOpd: 'Badan Pengelolaan Keuangan dan Aset Daerah', noRegister: '0067', jenis: 'Roda 4', namaBarang: 'Mobil Dinas', merkType: 'Toyota Avanza', noPolisi: 'A 1100 CD', status: 'BPKB Tersedia', scanBpkb: null, scanGambar: null, tahunPerolehan: '2022', noRangka: 'MHKM1BA3JCK12345', noMesin: '1NRF1234567' },
+            { id: 5, kodeOpd: '2.09.01', namaOpd: 'Dinas Perhubungan', noRegister: '0089', jenis: 'Roda 2', namaBarang: 'Motor Patroli', merkType: 'Yamaha NMAX', noPolisi: 'A 3345 EF', status: 'BPKB Tersedia', scanBpkb: null, scanGambar: null, tahunPerolehan: '2023', noRangka: 'MH3SG3180LJ12345', noMesin: 'G3J4E1234567' }
+        ]);
 
-            const dataInventory = ref([
-                { id: 1, kodeOpd: '1.02.01', namaOpd: 'Dinas Kesehatan', noRegister: '0001', jenis: 'Roda 4', namaBarang: 'Ambulance', merkType: 'Toyota Hiace', noPolisi: 'A 9901 XX', status: 'BPKB Tersedia', scanBpkb: null, scanGambar: null },
-                { id: 2, kodeOpd: '1.03.01', namaOpd: 'Dinas PU', noRegister: '0023', jenis: 'Roda 4', namaBarang: 'Mobil Operasional', merkType: 'Mitsubishi Triton', noPolisi: 'A 8821 AZ', status: 'BPKB Dipinjam', scanBpkb: null, scanGambar: null },
-                { id: 3, kodeOpd: '1.01.01', namaOpd: 'Setda', noRegister: '0045', jenis: 'Roda 2', namaBarang: 'Motor Dinas', merkType: 'Honda Vario', noPolisi: 'A 2234 BC', status: 'BPKB Terlambat Kembali', scanBpkb: null, scanGambar: null }
-            ]);
+        const dataLoans = ref([]);
+        const masterOpdList = ref([...DEFAULT_OPD_LIST]);
 
-            const dataLoans = ref([]);
+        const modals = ref({ bpkb: false, akun: false, detail: false, print: false, importOpd: false, fileViewer: false });
+        const bpkbForm = ref({});
+        const akunForm = ref({});
+        const detailData = ref({});
+        const loanForm = ref({ selectedId: '', namaPeminjam: '', tglPinjam: '', tglKembali: '', noSurat: '' });
+        const printConfig = ref({ nomorTengah: '', bulanRomawi: getRomanMonth(), tahun: new Date().getFullYear() });
+        const printData = ref(null);
+        const filter = ref({ search: '', jenis: 'all', status: 'all' });
+        const selectedBpkb = ref([]);
+        const availableRights = ['Melihat Data','Mengedit Data','Menghapus Data','Import Data','Mencetak Data'];
+        const pagination = ref({ current: 1, perPage: 15 });
+        const toasts = ref([]);
+        const loanFilter = ref({ status: 'all', tahun: 'all' });
+        const reportFilter = ref({ tahun: 'all', bulanDari: '0', bulanSampai: '12', opd: 'all', status: 'all' });
+        const reportData = ref([]);
+        const dbOpdSelect = ref('');
+        const importDbMode = ref('keep');
+        const pendingOpdData = ref([]);
+        const fileViewerSrc = ref('');
+        const bulanList = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
-            // Modals & Forms
-            const modals = ref({ bpkb: false, akun: false, detail: false, print: false });
+        // ===== UTILITY =====
+        const showToast = (msg, type = 'success') => {
+            const t = { id: Date.now(), msg, type, leaving: false };
+            toasts.value.push(t);
+            nextTick(() => lucide.createIcons());
+            setTimeout(() => { t.leaving = true; setTimeout(() => { toasts.value = toasts.value.filter(x => x.id !== t.id); }, 300); }, 3000);
+        };
+
+        const saveData = () => {
+            localStorage.setItem('spv2_users', JSON.stringify(dataUsers.value));
+            localStorage.setItem('spv2_inv', JSON.stringify(dataInventory.value));
+            localStorage.setItem('spv2_loans', JSON.stringify(dataLoans.value));
+            localStorage.setItem('spv2_opd', JSON.stringify(masterOpdList.value));
+            if(auth.value.isLoggedIn) localStorage.setItem('spv2_session', JSON.stringify(auth.value.user));
+        };
+
+        const loadData = () => {
+            try {
+                const u = localStorage.getItem('spv2_users'); if(u) dataUsers.value = JSON.parse(u);
+                const i = localStorage.getItem('spv2_inv'); if(i) dataInventory.value = JSON.parse(i);
+                const l = localStorage.getItem('spv2_loans'); if(l) dataLoans.value = JSON.parse(l);
+                const o = localStorage.getItem('spv2_opd'); if(o) masterOpdList.value = JSON.parse(o);
+                const s = localStorage.getItem('spv2_session'); if(s) { auth.value.user = JSON.parse(s); auth.value.isLoggedIn = true; }
+            } catch(e) { console.error(e); }
+        };
+
+        const updateClock = () => {
+            const n = new Date();
+            ui.value.date = n.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+            ui.value.time = n.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+        };
+
+        const hasRight = (r) => { if(auth.value.user?.username === 'admin') return true; return auth.value.user?.rights?.includes(r); };
+        const isAdmin = computed(() => auth.value.user?.username === 'admin');
+        const opdListAll = computed(() => [...new Set(masterOpdList.value)].sort());
+        const opdList = computed(() => [...new Set(dataInventory.value.map(d => d.namaOpd))].sort());
+
+        // ===== AUTH =====
+        const handleLogin = () => {
+            auth.value.errorMsg = '';
+            if(!loginForm.value.username || !loginForm.value.password) { auth.value.errorMsg = 'Username dan Password wajib diisi!'; return; }
+            const f = dataUsers.value.find(u => u.username === loginForm.value.username && u.password === loginForm.value.password);
+            if(f) { auth.value.user = {...f}; auth.value.isLoggedIn = true; saveData(); loginForm.value = {username:'',password:''}; }
+            else { auth.value.errorMsg = 'Username atau Password salah.'; }
+        };
+        const handleLogout = () => { auth.value.isLoggedIn = false; auth.value.user = null; ui.value.isSecretUnlocked = false; activeTab.value = 'dashboard'; localStorage.removeItem('spv2_session'); };
+        const promptSecretAdmin = () => { if(ui.value.isSecretUnlocked) return; const p = prompt("Otorisasi Admin (Bawaan: rahasia):"); if(p === 'rahasia') { ui.value.isSecretUnlocked = true; activeTab.value = 'pengaturan'; } else if(p !== null) alert("Password salah!"); };
+        const handleProfileUpload = (e) => { const f = e.target.files[0]; if(f) { const r = new FileReader(); r.onload = (ev) => { auth.value.user.photo = ev.target.result; const idx = dataUsers.value.findIndex(u => u.username === auth.value.user.username); if(idx > -1) dataUsers.value[idx].photo = ev.target.result; saveData(); }; r.readAsDataURL(f); } };
+
+        // ===== BPKB DATA =====
+        const filteredInventory = computed(() => {
+            let d = dataInventory.value;
+            if(!isAdmin.value) d = d.filter(x => x.namaOpd === auth.value.user?.opd);
+            if(filter.value.jenis !== 'all') d = d.filter(x => x.jenis === filter.value.jenis);
+            if(filter.value.status !== 'all') d = d.filter(x => x.status === filter.value.status);
+            if(filter.value.search) { const q = filter.value.search.toLowerCase(); d = d.filter(x => (x.noPolisi||'').toLowerCase().includes(q) || (x.namaBarang||'').toLowerCase().includes(q) || (x.kodeOpd||'').includes(q) || (x.namaOpd||'').toLowerCase().includes(q) || (x.merkType||'').toLowerCase().includes(q)); }
+            return d;
+        });
+
+        const totalPages = computed(() => Math.ceil(filteredInventory.value.length / pagination.value.perPage) || 1);
+        const visiblePages = computed(() => {
+            const tp = totalPages.value; const c = pagination.value.current;
+            let pages = []; const start = Math.max(1, c - 2); const end = Math.min(tp, c + 2);
+            for(let i = start; i <= end; i++) pages.push(i);
+            return pages;
+        });
+        const paginatedInventory = computed(() => {
+            const s = (pagination.value.current - 1) * pagination.value.perPage;
+            return filteredInventory.value.slice(s, s + pagination.value.perPage);
+        });
+
+        watch(() => filter.value, () => { pagination.value.current = 1; }, { deep: true });
+
+        const stats = computed(() => {
+            const d = filteredInventory.value;
+            return { total: d.length, r2: d.filter(x=>x.jenis==='Roda 2').length, r3: d.filter(x=>x.jenis==='Roda 3').length, r4: d.filter(x=>x.jenis==='Roda 4').length, tersedia: d.filter(x=>x.status==='BPKB Tersedia').length, dipinjam: d.filter(x=>x.status==='BPKB Dipinjam').length, terlambat: d.filter(x=>x.status==='BPKB Terlambat Kembali').length };
+        });
+
+        const openModalBpkb = (item = null) => {
+            bpkbForm.value = item ? {...item} : { id: null, status: 'BPKB Tersedia', jenis: 'Roda 4', scanBpkb: null, scanGambar: null, tahunPerolehan: '', noRangka: '', noMesin: '', kodeOpd: '', namaOpd: '', noRegister: '', namaBarang: '', merkType: '', noPolisi: '' };
+            modals.value.bpkb = true;
+        };
+
+        const handleFileUpload = (e, field) => {
+            const f = e.target.files[0]; if(!f) return;
+            if(f.size > 5*1024*1024) { showToast('File maksimal 5MB!','error'); return; }
+            const r = new FileReader(); r.onload = (ev) => { bpkbForm.value[field] = ev.target.result; }; r.readAsDataURL(f);
+        };
+
+        const saveBpkb = () => {
+            if(bpkbForm.value.id) { const idx = dataInventory.value.findIndex(d => d.id === bpkbForm.value.id); dataInventory.value[idx] = {...bpkbForm.value}; showToast('Data berhasil diperbarui'); }
+            else { dataInventory.value.unshift({...bpkbForm.value, id: Date.now()}); showToast('Data berhasil ditambahkan'); }
+            saveData(); modals.value.bpkb = false;
+        };
+
+        const deleteBpkb = (id) => { if(confirm("Hapus data ini?")) { dataInventory.value = dataInventory.value.filter(d => d.id !== id); saveData(); showToast('Data dihapus'); } };
+        const toggleSelectAll = (e) => { selectedBpkb.value = e.target.checked ? paginatedInventory.value.map(d=>d.id) : []; };
+        const bulkDeleteBpkb = () => { if(confirm(`Hapus ${selectedBpkb.value.length} data terpilih?`)) { dataInventory.value = dataInventory.value.filter(d => !selectedBpkb.value.includes(d.id)); selectedBpkb.value = []; saveData(); showToast('Data terpilih dihapus'); } };
+        const toggleStatus = (item) => { const s = ['BPKB Tersedia','BPKB Dipinjam','BPKB Terlambat Kembali']; item.status = s[(s.indexOf(item.status)+1)%s.length]; saveData(); };
+        const openDetailKendaraan = (item) => { detailData.value = item; modals.value.detail = true; };
+        const viewFile = (src) => { fileViewerSrc.value = src; modals.value.fileViewer = true; };
+
+        // ===== TEMPLATE & IMPORT BPKB =====
+        const downloadTemplateBpkb = () => {
+            const ws_data = [['No','Kode OPD','Nama OPD/UPB','No Register','Jenis (Roda 2/Roda 3/Roda 4)','Nama Barang','Merk/Type','Nomor Polisi','Tahun Perolehan','No. Rangka','No. Mesin'],
+            ['1','1.02.01','Dinas Kesehatan','0001','Roda 4','Ambulance','Toyota Hiace','A 9901 XX','2020','MHFXX8JS4L0001234','2KD1234567']];
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            ws['!cols'] = [{wch:5},{wch:12},{wch:35},{wch:12},{wch:25},{wch:20},{wch:20},{wch:15},{wch:15},{wch:22},{wch:18}];
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Template BPKB');
+            XLSX.writeFile(wb, 'Template_Daftar_BPKB.xlsx');
+            showToast('Template berhasil diunduh');
+        };
+
+        const importBpkbExcel = (e) => {
+            const f = e.target.files[0]; if(!f) return;
+            const r = new FileReader();
+            r.onload = (ev) => {
+                try {
+                    const wb = XLSX.read(ev.target.result, {type:'binary'});
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const data = XLSX.utils.sheet_to_json(ws, {header:1});
+                    let count = 0;
+                    for(let i = 1; i < data.length; i++) {
+                        const row = data[i]; if(!row || row.length < 8) continue;
+                        dataInventory.value.push({
+                            id: Date.now() + i, kodeOpd: String(row[1]||''), namaOpd: String(row[2]||''), noRegister: String(row[3]||''),
+                            jenis: String(row[4]||'Roda 4'), namaBarang: String(row[5]||''), merkType: String(row[6]||''),
+                            noPolisi: String(row[7]||''), tahunPerolehan: String(row[8]||''), noRangka: String(row[9]||''),
+                            noMesin: String(row[10]||''), status: 'BPKB Tersedia', scanBpkb: null, scanGambar: null
+                        }); count++;
+                    }
+                    saveData(); showToast(`${count} data berhasil diimport`);
+                } catch(err) { showToast('Gagal membaca file Excel','error'); }
+            };
+            r.readAsBinaryString(f);
+            e.target.value = '';
+        };
+
+        // ===== SIRKULASI =====
+        const bpkbTersedia = computed(() => {
+            let d = dataInventory.value.filter(x => x.status === 'BPKB Tersedia');
+            if(!isAdmin.value) d = d.filter(x => x.namaOpd === auth.value.user?.opd);
+            return d;
+        });
+
+        const loanYears = computed(() => [...new Set(dataLoans.value.map(l => l.tglPinjam?.split('-')[0]).filter(Boolean))].sort().reverse());
+
+        const filteredLoans = computed(() => {
+            let d = dataLoans.value;
+            if(!isAdmin.value) d = d.filter(l => l.unit?.namaOpd === auth.value.user?.opd);
+            if(loanFilter.value.status !== 'all') d = d.filter(l => (l.statusPinjam || 'Dipinjam') === loanFilter.value.status);
+            if(loanFilter.value.tahun !== 'all') d = d.filter(l => l.tglPinjam?.startsWith(loanFilter.value.tahun));
+            return d;
+        });
+
+        const submitLoan = () => {
+            const unit = dataInventory.value.find(d => d.id === loanForm.value.selectedId);
+            if(!unit) { showToast('Pilih kendaraan terlebih dahulu','error'); return; }
+            const newLoan = { id: Date.now(), ...loanForm.value, unit: {...unit}, statusPinjam: 'Dipinjam' };
+            unit.status = 'BPKB Dipinjam';
+            dataLoans.value.unshift(newLoan);
+            saveData(); showToast('Peminjaman berhasil dicatat');
+            loanForm.value = { selectedId: '', namaPeminjam: '', tglPinjam: '', tglKembali: '', noSurat: '' };
+        };
+
+        const returnLoan = (loan) => {
+            if(confirm('Konfirmasi pengembalian BPKB?')) {
+                loan.statusPinjam = 'Dikembalikan';
+                const unit = dataInventory.value.find(d => d.id === loan.selectedId || d.noPolisi === loan.unit.noPolisi);
+                if(unit) unit.status = 'BPKB Tersedia';
+                saveData(); showToast('BPKB telah dikembalikan');
+            }
+        };
+
+        // ===== PRINT KARTU KENDALI =====
+        const openPrintModal = (loan) => { printData.value = loan; printConfig.value.nomorTengah = ''; modals.value.print = true; };
+
+        const printKartuKendaliPDF = () => {
+            if(!printData.value) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p','mm','a4');
+            const d = printData.value;
+            const nomorSurat = `000.2.3.2/${printConfig.value.nomorTengah}/${printConfig.value.bulanRomawi}/Aset/${printConfig.value.tahun}`;
             
-            const bpkbForm = ref({});
-            const akunForm = ref({});
-            const detailData = ref({});
+            doc.setFont('times','bold'); doc.setFontSize(16);
+            doc.text('KARTU KENDALI PEMINJAMAN BPKB', 105, 25, {align:'center'});
+            doc.setFont('times','normal'); doc.setFontSize(11);
+            doc.text(`Nomor : ${nomorSurat}`, 105, 33, {align:'center'});
             
-            const loanForm = ref({ selectedId: '', namaPeminjam: '', tglPinjam: '', tglKembali: '', noSurat: '' });
-            
-            const printConfig = ref({ nomorTengah: '123', bulanRomawi: getRomanMonth(), tahun: new Date().getFullYear() });
-            const printData = ref(null);
-
-            const filter = ref({ search: '', jenis: 'all' });
-            const selectedBpkb = ref([]);
-            const availableRights = ['Melihat Data', 'Mengedit Data', 'Menghapus Data', 'Import Data', 'Mencetak Data'];
-
-            // ==================== METHODS: UTILITY & STORAGE ====================
-            const saveDataToLocal = () => {
-                localStorage.setItem('spBpkb_users', JSON.stringify(dataUsers.value));
-                localStorage.setItem('spBpkb_inventory', JSON.stringify(dataInventory.value));
-                localStorage.setItem('spBpkb_loans', JSON.stringify(dataLoans.value));
-                if(auth.value.isLoggedIn) {
-                    localStorage.setItem('spBpkb_session', JSON.stringify(auth.value.user));
-                }
-            };
-
-            const loadDataFromLocal = () => {
-                const lsUsers = localStorage.getItem('spBpkb_users');
-                const lsInv = localStorage.getItem('spBpkb_inventory');
-                const lsLoans = localStorage.getItem('spBpkb_loans');
-                const lsSession = localStorage.getItem('spBpkb_session');
-
-                if (lsUsers) dataUsers.value = JSON.parse(lsUsers);
-                if (lsInv) dataInventory.value = JSON.parse(lsInv);
-                if (lsLoans) dataLoans.value = JSON.parse(lsLoans);
-                if (lsSession) {
-                    auth.value.user = JSON.parse(lsSession);
-                    auth.value.isLoggedIn = true;
-                }
-            };
-
-            const updateClock = () => {
-                const now = new Date();
-                ui.value.date = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                ui.value.time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-            };
-
-            const hasRight = (rightName) => {
-                if(auth.value.user?.username === 'admin') return true;
-                return auth.value.user?.rights?.includes(rightName);
-            };
-
-            const mockAction = (msg) => { alert(msg); };
-
-            // ==================== METHODS: AUTH & PROFILE ====================
-            const handleLogin = () => {
-                auth.value.errorMsg = '';
-                if (!loginForm.value.username || !loginForm.value.password) {
-                    auth.value.errorMsg = 'Username dan Password wajib diisi!';
-                    return;
-                }
-                const foundUser = dataUsers.value.find(u => u.username === loginForm.value.username && u.password === loginForm.value.password);
-                if (foundUser) {
-                    auth.value.user = { ...foundUser };
-                    auth.value.isLoggedIn = true;
-                    saveDataToLocal();
-                    loginForm.value = { username: '', password: '' };
-                } else {
-                    auth.value.errorMsg = 'Username atau Password yang Anda masukkan salah.';
-                }
-            };
-
-            const handleLogout = () => {
-                auth.value.isLoggedIn = false;
-                auth.value.user = null;
-                ui.value.isSecretUnlocked = false;
-                activeTab.value = 'dashboard';
-                localStorage.removeItem('spBpkb_session');
-            };
-
-            const promptSecretAdmin = () => {
-                if (ui.value.isSecretUnlocked) return;
-                const pwd = prompt("Otorisasi Khusus Admin (Bawaan: rahasia):");
-                if (pwd === 'rahasia') {
-                    ui.value.isSecretUnlocked = true;
-                    activeTab.value = 'pengaturan';
-                } else if (pwd !== null) {
-                    alert("Password otoritas salah!");
-                }
-            };
-
-            const handleProfileUpload = (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        auth.value.user.photo = e.target.result;
-                        // Update in users array too
-                        const uIdx = dataUsers.value.findIndex(u => u.username === auth.value.user.username);
-                        if(uIdx > -1) dataUsers.value[uIdx].photo = e.target.result;
-                        saveDataToLocal();
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-
-            // ==================== METHODS: BPKB DATA ====================
-            const filteredInventory = computed(() => {
-                let data = dataInventory.value;
-                if(auth.value.user?.username !== 'admin') {
-                    data = data.filter(d => d.namaOpd === auth.value.user.opd);
-                }
-                if (filter.value.jenis !== 'all') data = data.filter(d => d.jenis === filter.value.jenis);
-                if (filter.value.search) {
-                    const q = filter.value.search.toLowerCase();
-                    data = data.filter(d => d.noPolisi.toLowerCase().includes(q) || d.namaBarang.toLowerCase().includes(q) || d.kodeOpd.includes(q));
-                }
-                return data;
+            doc.setFontSize(11);
+            const fields = [
+                ['Nomor Surat', d.noSurat], ['Nomor', d.unit.noRegister], ['Nomor Polisi', d.unit.noPolisi],
+                ['Merk/Type', d.unit.merkType], ['Kode OPD', d.unit.kodeOpd], ['Nama OPD/UPB', d.unit.namaOpd],
+                ['Tanggal Pinjam', d.tglPinjam], ['Tgl Estimasi Kembali', d.tglKembali], ['Nama Peminjam', d.namaPeminjam]
+            ];
+            let y = 45;
+            fields.forEach(([label, val]) => {
+                doc.text(label, 25, y); doc.text(':', 80, y); doc.text(String(val || ''), 85, y);
+                y += 7;
             });
 
-            const stats = computed(() => {
-                const d = filteredInventory.value;
-                return {
-                    total: d.length,
-                    r2: d.filter(x => x.jenis === 'Roda 2').length,
-                    r3: d.filter(x => x.jenis === 'Roda 3').length,
-                    r4: d.filter(x => x.jenis === 'Roda 4').length,
-                    tersedia: d.filter(x => x.status === 'BPKB Tersedia').length,
-                    dipinjam: d.filter(x => x.status === 'BPKB Dipinjam').length,
-                    terlambat: d.filter(x => x.status === 'BPKB Terlambat Kembali').length
-                };
+            y += 15;
+            doc.setFont('times','bold'); doc.text('Peminjaman,', 25, y);
+            y += 8;
+            doc.setFont('times','normal');
+            doc.text('Peminjam,', 45, y); doc.text('Cilegon, ........................', 120, y);
+            y += 5;
+            doc.text('', 45, y); doc.text('Petugas Aset,', 135, y);
+            y += 25;
+            doc.setFont('times','bold');
+            doc.text(`(${d.namaPeminjam})`, 45, y); doc.text('(................................)', 120, y);
+            doc.line(30, y+1, 75, y+1); doc.line(105, y+1, 160, y+1);
+
+            y += 20;
+            doc.setFont('times','bold'); doc.text('Pengembalian,', 25, y);
+            y += 8;
+            doc.setFont('times','normal');
+            doc.text('Peminjam,', 45, y); doc.text('Cilegon, ........................', 120, y);
+            y += 5;
+            doc.text('', 45, y); doc.text('Petugas Aset,', 135, y);
+            y += 25;
+            doc.setFont('times','bold');
+            doc.text(`(${d.namaPeminjam})`, 45, y); doc.text('(................................)', 120, y);
+            doc.line(30, y+1, 75, y+1); doc.line(105, y+1, 160, y+1);
+
+            doc.save(`Kartu_Kendali_${d.unit.noPolisi.replace(/\s/g,'_')}.pdf`);
+            modals.value.print = false; showToast('PDF Kartu Kendali berhasil diunduh');
+        };
+
+        const printKartuKendaliExcel = () => {
+            if(!printData.value) return;
+            const d = printData.value;
+            const nomorSurat = `000.2.3.2/${printConfig.value.nomorTengah}/${printConfig.value.bulanRomawi}/Aset/${printConfig.value.tahun}`;
+            const wsData = [
+                ['KARTU KENDALI PEMINJAMAN BPKB'],
+                [`Nomor : ${nomorSurat}`],
+                [],
+                ['Nomor Surat', ':', d.noSurat],
+                ['Nomor', ':', d.unit.noRegister],
+                ['Nomor Polisi', ':', d.unit.noPolisi],
+                ['Merk/Type', ':', d.unit.merkType],
+                ['Kode OPD', ':', d.unit.kodeOpd],
+                ['Nama OPD/UPB', ':', d.unit.namaOpd],
+                ['Tanggal Pinjam', ':', d.tglPinjam],
+                ['Tgl Estimasi Kembali', ':', d.tglKembali],
+                ['Nama Peminjam', ':', d.namaPeminjam],
+                [],
+                ['Peminjaman'],
+                ['Peminjam','','Petugas Aset'],
+                [],[], [],
+                [`(${d.namaPeminjam})`,'','(................................)'],
+                [],
+                ['Pengembalian'],
+                ['Peminjam','','Petugas Aset'],
+                [],[], [],
+                [`(${d.namaPeminjam})`,'','(................................)']
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            ws['!cols'] = [{wch:25},{wch:3},{wch:35}];
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Kartu Kendali');
+            XLSX.writeFile(wb, `Kartu_Kendali_${d.unit.noPolisi.replace(/\s/g,'_')}.xlsx`);
+            modals.value.print = false; showToast('Excel Kartu Kendali berhasil diunduh');
+        };
+
+        // ===== LAPORAN =====
+        const reportYears = computed(() => {
+            const years = new Set();
+            dataLoans.value.forEach(l => { if(l.tglPinjam) years.add(l.tglPinjam.split('-')[0]); });
+            const cy = String(new Date().getFullYear());
+            years.add(cy);
+            return [...years].sort().reverse();
+        });
+
+        const generateReport = () => {
+            let d = dataLoans.value;
+            if(!isAdmin.value) d = d.filter(l => l.unit?.namaOpd === auth.value.user?.opd);
+            if(reportFilter.value.tahun !== 'all') d = d.filter(l => l.tglPinjam?.startsWith(reportFilter.value.tahun));
+            if(reportFilter.value.opd !== 'all') d = d.filter(l => l.unit?.namaOpd === reportFilter.value.opd);
+            if(parseInt(reportFilter.value.bulanDari) > 0) {
+                d = d.filter(l => {
+                    const m = parseInt(l.tglPinjam?.split('-')[1] || '0');
+                    return m >= parseInt(reportFilter.value.bulanDari) && m <= parseInt(reportFilter.value.bulanSampai);
+                });
+            }
+            reportData.value = d.map(l => ({
+                opd: l.unit?.namaOpd || '', nopol: l.unit?.noPolisi || '', merk: l.unit?.merkType || '',
+                peminjam: l.namaPeminjam, tglPinjam: l.tglPinjam, tglKembali: l.tglKembali,
+                noSurat: l.noSurat, statusPinjam: l.statusPinjam || 'Dipinjam'
+            }));
+            if(reportData.value.length === 0) showToast('Tidak ada data untuk filter ini','error');
+            else showToast(`${reportData.value.length} data ditemukan`);
+        };
+
+        const exportReportExcel = () => {
+            if(reportData.value.length === 0) { showToast('Tampilkan laporan terlebih dahulu','error'); return; }
+            const header = ['No','OPD/UPB','Nopol','Merk/Type','Peminjam','Tgl Pinjam','Tgl Kembali','No Surat','Status'];
+            const rows = reportData.value.map((r,i) => [i+1, r.opd, r.nopol, r.merk, r.peminjam, r.tglPinjam, r.tglKembali, r.noSurat, r.statusPinjam]);
+            const ws = XLSX.utils.aoa_to_sheet([['LAPORAN PEMINJAMAN BPKB'],['Pemerintah Kota Cilegon'],[],header,...rows]);
+            ws['!cols'] = [{wch:5},{wch:35},{wch:15},{wch:20},{wch:20},{wch:12},{wch:12},{wch:20},{wch:15}];
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Laporan');
+            XLSX.writeFile(wb, 'Laporan_Peminjaman_BPKB.xlsx');
+            showToast('Laporan Excel berhasil diunduh');
+        };
+
+        const exportReportPDF = () => {
+            if(reportData.value.length === 0) { showToast('Tampilkan laporan terlebih dahulu','error'); return; }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l','mm','a4');
+            doc.setFont('times','bold'); doc.setFontSize(14);
+            doc.text('LAPORAN PEMINJAMAN BPKB', 148, 15, {align:'center'});
+            doc.setFontSize(11); doc.setFont('times','normal');
+            doc.text('Pemerintah Kota Cilegon', 148, 22, {align:'center'});
+
+            doc.autoTable({
+                startY: 30,
+                head: [['No','OPD/UPB','Nopol','Merk/Type','Peminjam','Tgl Pinjam','Tgl Kembali','No Surat','Status']],
+                body: reportData.value.map((r,i) => [i+1, r.opd, r.nopol, r.merk, r.peminjam, r.tglPinjam, r.tglKembali, r.noSurat, r.statusPinjam]),
+                styles: { font: 'times', fontSize: 8 },
+                headStyles: { fillColor: [37,99,235] },
+                alternateRowStyles: { fillColor: [248,250,252] }
             });
+            doc.save('Laporan_Peminjaman_BPKB.pdf');
+            showToast('Laporan PDF berhasil diunduh');
+        };
 
-            const openModalBpkb = (item = null) => {
-                bpkbForm.value = item ? { ...item } : { id: null, status: 'BPKB Tersedia', jenis: 'Roda 4', scanBpkb: null, scanGambar: null };
-                modals.value.bpkb = true;
+        // ===== PENGATURAN AKUN =====
+        const openModalAkun = (u = null) => {
+            if(u) akunForm.value = {...u, isEdit: true, password: '', _showPwd: false};
+            else akunForm.value = { username: '', opd: '', password: '', rights: [], isEdit: false, _showPwd: false };
+            modals.value.akun = true;
+        };
+
+        const saveAkun = () => {
+            if(akunForm.value.isEdit) {
+                const idx = dataUsers.value.findIndex(d => d.username === akunForm.value.username);
+                if(akunForm.value.password) dataUsers.value[idx].password = akunForm.value.password;
+                dataUsers.value[idx].opd = akunForm.value.opd;
+                dataUsers.value[idx].rights = [...akunForm.value.rights];
+                showToast('Akun berhasil diperbarui');
+            } else {
+                if(dataUsers.value.find(u => u.username === akunForm.value.username)) { showToast('Username sudah ada!','error'); return; }
+                dataUsers.value.push({...akunForm.value, _showPwd: false, photo: null});
+                showToast('Akun berhasil ditambahkan');
+            }
+            saveData(); modals.value.akun = false;
+        };
+
+        const deleteAkun = (uname) => {
+            if(uname === 'admin') { showToast('Akun admin tidak bisa dihapus!','error'); return; }
+            if(confirm("Hapus akun ini?")) { dataUsers.value = dataUsers.value.filter(u => u.username !== uname); saveData(); showToast('Akun dihapus'); }
+        };
+
+        // ===== OPD IMPORT =====
+        const downloadOpdTemplate = () => {
+            const ws_data = [['No','Nama OPD/UPB']];
+            masterOpdList.value.forEach((o,i) => ws_data.push([i+1, o]));
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            ws['!cols'] = [{wch:5},{wch:55}];
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Daftar OPD');
+            XLSX.writeFile(wb, 'Daftar_OPD_UPB.xlsx');
+            showToast('Template OPD diunduh');
+        };
+
+        const importOpdExcel = (e) => {
+            const f = e.target.files[0]; if(!f) return;
+            const r = new FileReader();
+            r.onload = (ev) => {
+                try {
+                    const wb = XLSX.read(ev.target.result, {type:'binary'});
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const data = XLSX.utils.sheet_to_json(ws, {header:1});
+                    pendingOpdData.value = [];
+                    for(let i = 1; i < data.length; i++) {
+                        const row = data[i]; if(!row || !row[1]) continue;
+                        pendingOpdData.value.push(String(row[1]).trim());
+                    }
+                    if(pendingOpdData.value.length > 0) modals.value.importOpd = true;
+                    else showToast('Tidak ada data OPD ditemukan','error');
+                } catch(err) { showToast('Gagal membaca file','error'); }
             };
+            r.readAsBinaryString(f);
+            e.target.value = '';
+        };
 
-            const handleFileUpload = (event, fieldName) => {
-                const file = event.target.files[0];
-                if(file) {
-                    if(file.size > 5 * 1024 * 1024) { alert("File maksimal 5MB!"); return; }
-                    const reader = new FileReader();
-                    reader.onload = (e) => { bpkbForm.value[fieldName] = e.target.result; };
-                    reader.readAsDataURL(file);
-                }
+        const executeImportOpd = (mode) => {
+            if(mode === 'replace') masterOpdList.value = [...pendingOpdData.value];
+            else masterOpdList.value = [...new Set([...masterOpdList.value, ...pendingOpdData.value])];
+            saveData(); modals.value.importOpd = false;
+            showToast(`${pendingOpdData.value.length} OPD berhasil diimport`);
+        };
+
+        // ===== DATABASE =====
+        const backupAll = () => {
+            const data = { users: dataUsers.value, inventory: dataInventory.value, loans: dataLoans.value, opdList: masterOpdList.value, version: '2.0', date: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `Backup_SPBPKB_${new Date().toISOString().split('T')[0]}.json`;
+            a.click(); showToast('Backup seluruh database berhasil');
+        };
+
+        const backupByOpd = () => {
+            if(!dbOpdSelect.value) return;
+            const inv = dataInventory.value.filter(d => d.namaOpd === dbOpdSelect.value);
+            const loans = dataLoans.value.filter(l => l.unit?.namaOpd === dbOpdSelect.value);
+            const data = { opd: dbOpdSelect.value, inventory: inv, loans: loans, version: '2.0', date: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = `Backup_${dbOpdSelect.value.replace(/\s/g,'_')}_${new Date().toISOString().split('T')[0]}.json`;
+            a.click(); showToast(`Backup ${dbOpdSelect.value} berhasil`);
+        };
+
+        const importDatabase = (e) => {
+            const f = e.target.files[0]; if(!f) return;
+            const r = new FileReader();
+            r.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if(importDbMode.value === 'replace') {
+                        if(data.users) dataUsers.value = data.users;
+                        if(data.inventory) dataInventory.value = data.inventory;
+                        if(data.loans) dataLoans.value = data.loans;
+                        if(data.opdList) masterOpdList.value = data.opdList;
+                        showToast('Database diganti dengan data baru');
+                    } else {
+                        if(data.users) data.users.forEach(u => { if(!dataUsers.value.find(x => x.username === u.username)) dataUsers.value.push(u); });
+                        if(data.inventory) data.inventory.forEach(i => { if(!dataInventory.value.find(x => x.id === i.id)) dataInventory.value.push(i); });
+                        if(data.loans) data.loans.forEach(l => { if(!dataLoans.value.find(x => x.id === l.id)) dataLoans.value.push(l); });
+                        if(data.opdList) masterOpdList.value = [...new Set([...masterOpdList.value, ...data.opdList])];
+                        showToast('Data baru ditambahkan tanpa menghapus data lama');
+                    }
+                    saveData();
+                } catch(err) { showToast('File backup tidak valid','error'); }
             };
+            r.readAsText(f);
+            e.target.value = '';
+        };
 
-            const saveBpkb = () => {
-                if (bpkbForm.value.id) {
-                    const idx = dataInventory.value.findIndex(d => d.id === bpkbForm.value.id);
-                    dataInventory.value[idx] = { ...bpkbForm.value };
-                } else {
-                    dataInventory.value.unshift({ ...bpkbForm.value, id: Date.now() });
-                }
-                saveDataToLocal();
-                modals.value.bpkb = false;
-            };
+        const resetDatabase = () => {
+            const c1 = confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SELURUH data termasuk:\n- Data BPKB\n- Data Akun\n- Data Sirkulasi\n\nTindakan ini TIDAK DAPAT dikembalikan!\n\nLanjutkan?');
+            if(!c1) return;
+            const c2 = prompt('Ketik "RESET" untuk mengkonfirmasi penghapusan:');
+            if(c2 !== 'RESET') { showToast('Reset dibatalkan','error'); return; }
+            dataInventory.value = [];
+            dataLoans.value = [];
+            dataUsers.value = [{ username: 'admin', opd: 'Badan Pengelolaan Keuangan dan Aset Daerah', password: 'admin', rights: ['Melihat Data','Mengedit Data','Menghapus Data','Import Data','Mencetak Data'], photo: null, _showPwd: false }];
+            masterOpdList.value = [...DEFAULT_OPD_LIST];
+            saveData(); showToast('Database telah direset');
+        };
 
-            const deleteBpkb = (id) => {
-                if (confirm("Anda yakin akan menghapus data ini?")) {
-                    dataInventory.value = dataInventory.value.filter(d => d.id !== id);
-                    saveDataToLocal();
-                }
-            };
-
-            const toggleSelectAll = (e) => {
-                selectedBpkb.value = e.target.checked ? filteredInventory.value.map(d => d.id) : [];
-            };
-
-            const bulkDeleteBpkb = () => {
-                if (confirm(`Anda yakin akan menghapus ${selectedBpkb.value.length} data terpilih?`)) {
-                    dataInventory.value = dataInventory.value.filter(d => !selectedBpkb.value.includes(d.id));
-                    selectedBpkb.value = [];
-                    saveDataToLocal();
-                }
-            };
-
-            const toggleStatus = (item) => {
-                const s = ['BPKB Tersedia', 'BPKB Dipinjam', 'BPKB Terlambat Kembali'];
-                item.status = s[(s.indexOf(item.status) + 1) % s.length];
-                saveDataToLocal();
-            };
-
-            const openDetailKendaraan = (item) => {
-                detailData.value = item;
-                modals.value.detail = true;
-            };
-
-            // ==================== METHODS: SIRKULASI ====================
-            const bpkbTersedia = computed(() => filteredInventory.value.filter(d => d.status === 'BPKB Tersedia'));
-
-            const submitLoan = () => {
-                const unit = dataInventory.value.find(d => d.id === loanForm.value.selectedId);
-                if (!unit) return;
-
-                const newLoan = { id: Date.now(), ...loanForm.value, unit: { ...unit } };
-                
-                // Ubah status
-                unit.status = 'BPKB Dipinjam';
-                
-                dataLoans.value.unshift(newLoan);
-                saveDataToLocal();
-                
-                alert("Permohonan Peminjaman Berhasil Dicatat.");
-                loanForm.value = { selectedId: '', namaPeminjam: '', tglPinjam: '', tglKembali: '', noSurat: '' };
-            };
-
-            const openPrintModal = (loan) => {
-                printData.value = loan;
-                modals.value.print = true;
-            };
-
-            const executePrint = () => {
-                modals.value.print = false;
-                setTimeout(() => { window.print(); }, 300);
-            };
-
-            // ==================== METHODS: PENGATURAN AKUN ====================
-            const openModalAkun = (u = null) => {
-                if (u) {
-                    akunForm.value = { ...u, isEdit: true, password: '' }; // Jangan tampilkan password lama
-                } else {
-                    akunForm.value = { username: '', opd: '', password: '', rights: [], isEdit: false };
-                }
-                modals.value.akun = true;
-            };
-
-            const saveAkun = () => {
-                if (akunForm.value.isEdit) {
-                    const idx = dataUsers.value.findIndex(d => d.username === akunForm.value.username);
-                    if(akunForm.value.password) dataUsers.value[idx].password = akunForm.value.password;
-                    dataUsers.value[idx].opd = akunForm.value.opd;
-                    dataUsers.value[idx].rights = [...akunForm.value.rights];
-                } else {
-                    dataUsers.value.push({ ...akunForm.value, isEdit: undefined });
-                }
-                saveDataToLocal();
-                modals.value.akun = false;
-            };
-
-            const deleteAkun = (uname) => {
-                if(uname === 'admin') { alert("Akun admin utama tidak bisa dihapus!"); return; }
-                if (confirm("Anda yakin akan menghapus data akun ini?")) {
-                    dataUsers.value = dataUsers.value.filter(u => u.username !== uname);
-                    saveDataToLocal();
-                }
-            };
-
-            // ==================== LIFECYCLE & CHARTS ====================
-            const initChart = () => {
-                const ctx = document.getElementById('bpkbChart');
-                if (!ctx) return;
-                const existing = Chart.getChart(ctx);
-                if (existing) existing.destroy();
-
-                new Chart(ctx, {
+        // ===== CHARTS =====
+        const initCharts = () => {
+            const ctx1 = document.getElementById('bpkbChart');
+            const ctx2 = document.getElementById('jenisChart');
+            if(ctx1) {
+                const ex = Chart.getChart(ctx1); if(ex) ex.destroy();
+                new Chart(ctx1, {
                     type: 'bar',
                     data: {
                         labels: ['Tersedia', 'Dipinjam', 'Terlambat'],
-                        datasets: [{
-                            label: 'Jumlah BPKB',
-                            data: [stats.value.tersedia, stats.value.dipinjam, stats.value.terlambat],
-                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
-                            borderRadius: 8
-                        }]
+                        datasets: [{ label: 'Jumlah', data: [stats.value.tersedia, stats.value.dipinjam, stats.value.terlambat], backgroundColor: ['#10b981','#f59e0b','#ef4444'], borderRadius: 8, barThickness: 40 }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } } }
                 });
-            };
+            }
+            if(ctx2) {
+                const ex2 = Chart.getChart(ctx2); if(ex2) ex2.destroy();
+                new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Roda 2', 'Roda 3', 'Roda 4'],
+                        datasets: [{ data: [stats.value.r2, stats.value.r3, stats.value.r4], backgroundColor: ['#8b5cf6','#06b6d4','#3b82f6'], borderWidth: 0, spacing: 2 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { padding: 16, font: { size: 11, weight: 'bold' } } } } }
+                });
+            }
+        };
 
-            watch(activeTab, (val) => {
-                nextTick(() => { 
-                    lucide.createIcons(); 
-                    if(val === 'dashboard') initChart();
-                });
+        watch(activeTab, (val) => { nextTick(() => { lucide.createIcons(); if(val === 'dashboard') setTimeout(initCharts, 100); }); });
+
+        onMounted(() => {
+            loadData();
+            updateClock(); setInterval(updateClock, 1000);
+            nextTick(() => {
+                lucide.createIcons();
+                if(auth.value.isLoggedIn && activeTab.value === 'dashboard') setTimeout(initCharts, 200);
             });
+        });
 
-            onMounted(() => {
-                loadDataFromLocal();
-                updateClock();
-                setInterval(updateClock, 1000);
-                nextTick(() => { 
-                    lucide.createIcons(); 
-                    if(auth.value.isLoggedIn && activeTab.value === 'dashboard') initChart();
-                });
-            });
-
-            return {
-                auth, ui, activeTab, adminTab, loginForm, handleLogin, handleLogout, promptSecretAdmin, handleProfileUpload,
-                dataUsers, dataInventory, dataLoans, filteredInventory, stats, filter, selectedBpkb, availableRights,
-                hasRight, mockAction,
-                modals, bpkbForm, akunForm, detailData, loanForm, printConfig, printData, bpkbTersedia,
-                openModalBpkb, handleFileUpload, saveBpkb, deleteBpkb, toggleSelectAll, bulkDeleteBpkb, toggleStatus, openDetailKendaraan,
-                submitLoan, openPrintModal, executePrint,
-                openModalAkun, saveAkun, deleteAkun
-            };
-        }
-    }).mount('#app');
+        return {
+            auth, ui, activeTab, loginForm, menuTabs, handleLogin, handleLogout, promptSecretAdmin, handleProfileUpload,
+            dataUsers, dataInventory, dataLoans, masterOpdList, filteredInventory, paginatedInventory, stats, filter, selectedBpkb,
+            availableRights, pagination, totalPages, visiblePages, toasts, bulanList,
+            isAdmin, hasRight, opdListAll, opdList,
+            modals, bpkbForm, akunForm, detailData, loanForm, printConfig, printData, bpkbTersedia,
+            loanFilter, loanYears, filteredLoans, fileViewerSrc,
+            reportFilter, reportData, reportYears, dbOpdSelect, importDbMode, pendingOpdData,
+            openModalBpkb, handleFileUpload, saveBpkb, deleteBpkb, toggleSelectAll, bulkDeleteBpkb, toggleStatus,
+            openDetailKendaraan, viewFile,
+            downloadTemplateBpkb, importBpkbExcel,
+            submitLoan, returnLoan, openPrintModal, printKartuKendaliPDF, printKartuKendaliExcel,
+            generateReport, exportReportExcel, exportReportPDF,
+            openModalAkun, saveAkun, deleteAkun,
+            downloadOpdTemplate, importOpdExcel, executeImportOpd,
+            backupAll, backupByOpd, importDatabase, resetDatabase,
+            showToast
+        };
+    }
+}).mount('#app');
 </script>
 </body>
 </html>
